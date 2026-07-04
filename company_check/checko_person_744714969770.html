@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ru" style="height:100%">
+
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style>*,::after,::before{box-sizing:border-box}@view-transition{navigation:auto}html{scrollbar-gutter:stable}body{padding-right:0 !important;margin:0;font-family:'DefaultFont',-apple-system,BlinkMacSystemFont,sans-serif!important;font-size:16px;font-weight:400;line-height:1.5;color:#111;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:#fff0}.d-flex{display:flex!important}.flex-column{flex-direction:column!important}.flex-column-reverse{flex-direction:column-reverse!important}.flex-row{flex-direction:row!important}.flex-row-reverse{flex-direction:row-reverse!important}.justify-content-end{justify-content:flex-end!important}.flex-shrink-0{flex-shrink:0!important}.flex-fill{flex:1 1 auto!important}.h-100{height:100%!important}.me-auto{margin-right:auto!important}.mb-3{margin-bottom: 1rem !important}.mt-3{margin-top:1rem!important}.mb-4{margin-bottom:1.5rem!important}.mt-4{margin-top:1.5rem!important}.g-4,.gx-4{--bs-gutter-x:2rem}.g-2,.gy-2{--bs-gutter-y:0.5rem}hr{margin:1rem 0;color:inherit;border:0;border-top:1px solid var(--bs-gray-150)}.align-self-center{align-self:center!important}.d-inline{display:inline!important}.d-inline-block{display:inline-block!important}.d-block{display:block!important}.d-grid{display:grid!important}.d-inline-grid{display:inline-grid!important}.d-table{display:table!important}.d-table-row{display:table-row!important}.d-table-cell{display:table-cell!important}.d-inline-flex{display:inline-flex!important}.d-none{display:none!important}.container-content{margin-top:2rem;margin-bottom:4rem;}.mx-auto{margin-right: auto !important;margin-left: auto !important;}.mt-0{margin-top:0!important}.mb-0{margin-bottom:0!important}.mt-2{margin-top:.5rem!important}.mb-2{margin-bottom:.5rem!important}.overflow-x-hidden{overflow-x:hidden!important}.container,.container-fluid,.container-lg,.container-md,.container-sm,.container-xl,.container-xxl{--bs-gutter-x:1.5rem;--bs-gutter-y:0;width:100%;padding-right:calc(var(--bs-gutter-x) * .5);padding-left:calc(var(--bs-gutter-x) * .5);margin-right:auto;margin-left:auto}.bs-row{--bs-gutter-x:1.5rem;--bs-gutter-y:0;display:flex;flex-wrap:wrap;margin-top:calc(-1 * var(--bs-gutter-y));margin-right:-12px;margin-left:calc(-.5 * var(--bs-gutter-x))}.bs-row>*{flex-shrink:0;width:100%;max-width:100%;padding-right:calc(var(--bs-gutter-x) * .5);padding-left:calc(var(--bs-gutter-x) * .5);margin-top:var(--bs-gutter-y)}.fade:not(.show){opacity:0}.modal{display:none}@media (min-width:576px){.container,.container-sm{max-width:540px}}@media (min-width:768px){.container,.container-md,.container-sm{max-width:720px}}@media (min-width:992px){.container,.container-lg,.container-md,.container-sm{max-width:1140px}}@media (min-width:1200px){.container,.container-lg,.container-md,.container-sm,.container-xl{max-width:1624px}.col-xl-6{flex:0 0 auto;width:50%}}@media (min-width:1400px){.container,.container-lg,.container-md,.container-sm,.container-xl,.container-xxl{max-width:1624px}}@media (min-width:576px){.d-sm-inline-block{display:inline-block!important}}@media (min-width:768px){.d-md-inline-block{display:inline-block!important}}@media (min-width:992px){.d-lg-inline-block{display:inline-block!important}.d-lg-none{display:none!important}}.x-page,.select-page{background-color:var(--bs-gray-100)}.x-section{margin:1rem 0 0 0;padding:1rem;background-color:#fff;border:1px solid var(--bs-gray-150)}.main-section{margin-top:0;border-top:none}.left{display:block;position:relative;width:240px;left:-1px;padding:1rem 0 0 0;background:#fff;border-right:1px solid var(--bs-gray-150);font-size:14px}.select-page .left{width:325px;font-size:16px}.lsb{position:sticky;top:.75rem;padding:0 12px 1rem 0}.lsb .nav-link i svg,#sb .nav-link i svg{margin-right:.6rem;margin-top:-3px}.lsb a.nav-link .count,#sb a.nav-link .count{float:right;position:relative;color:var(--bs-gray-800);margin-top:2px;padding:0 .4rem;background:var(--bs-gray-100);border-radius:8px;font-size:12px}.rc{flex:1;margin:0 0 0 calc(1rem - 1px);max-width:1360px}.select-page .rc{margin:0}p{margin:0}ol,ul{margin:0;padding:0;list-style:none}.dropdown,.dropdown-center,.dropend,.dropstart,.dropup,.dropup-center{position:relative}.dropdown-menu{position:absolute;z-index:1000;display:none;min-width:7rem;padding:.5rem 0;margin:0;color:#111;text-align:left;list-style:none;background-color:#fff;background-clip:padding-box;border-radius:4px;box-shadow:0 5px 5px -3px rgb(0 0 0 / .2),0 8px 10px 1px rgb(0 0 0 / .14),0 3px 14px 2px rgb(0 0 0 / .12);overflow-x:hidden}.nav{display:flex;flex-wrap:wrap;padding-left:0;margin-bottom:0;list-style:none}.offcanvas{position:fixed;bottom:0;z-index:1045;display:flex;flex-direction:column;max-width:100%;color:#fff;visibility:hidden;background-color:var(--bs-gray-900);background-clip:padding-box;outline:0;transition:transform 0.3s ease-in-out}.offcanvas.offcanvas-end{top:0;right:0;width:400px;border-left:1px solid rgb(0 0 0 / .175);transform:translateX(100%)}.search-panel{background:#5fac62;overflow:hidden}#search-flex{display:inline-block;position:relative;width:100%;margin:1rem 0 0 0}#search-flex>.flex-fill{background:#529d55}#search-form::after{background-color:#529d55;bottom:0;clip-path:polygon(0 0,0 100%,100% 100%);content:'';height:100%;position:absolute;right:-60px;width:60px;overflow:hidden}#search-form::before{background-color:#5fac62;bottom:0;clip-path:polygon(0 0,0 100%,100% 100%);content:'';height:16px;position:absolute;width:16px}#search-form>div{position:relative;display:flex;flex-wrap:wrap;align-items:stretch;width:100%}#search{height:44px;max-height:44px;margin:0 0 1rem 0;padding:12px 16px;border:0;border-radius:0;font-size:16px;background:#fff;position:relative;flex:1 1 auto;width:1%;min-width:0}footer{margin-top:auto!important;padding:2rem 0;background-color:var(--bs-gray-900);color:var(--bs-gray-150);font-size:14px}@media (min-width:992px){main.x-page{background:linear-gradient(to right,#fff 0%,#fff 7.5%,var(--bs-gray-100) 7.5%,var(--bs-gray-100) 100%)}main.x-page.select-page{background:var(--bs-gray-100)}}@media (min-width:1200px){main.x-page{background:linear-gradient(to right,#fff 0%,#fff 10%,var(--bs-gray-100) 10%,var(--bs-gray-100) 100%)}}@media (min-width:1400px){main.x-page{background:linear-gradient(to right,#fff 0%,#fff 12.5%,var(--bs-gray-100) 12.5%,var(--bs-gray-100) 100%)}}@media (min-width:1600px){main.x-page{background:linear-gradient(to right,#fff 0%,#fff 15%,var(--bs-gray-100) 15%,var(--bs-gray-100) 100%)}}@media (min-width:2080px){main.x-page{background:linear-gradient(to right,#fff 0%,#fff 22.5%,var(--bs-gray-100) 22.5%,var(--bs-gray-100) 100%)}}@media (min-width:2400px){main.x-page{background:linear-gradient(to right,#fff 0%,#fff 25%,var(--bs-gray-100) 25%,var(--bs-gray-100) 100%)}}@media (min-width:2800px){main.x-page{background:linear-gradient(to right,#fff 0%,#fff 30%,var(--bs-gray-100) 30%,var(--bs-gray-100) 100%)}}@media (max-width:1199.98px){.border-xl-start{border-left:none!important}.gap-xl{height:.5rem!important}}@media (max-width:991.98px){.left{display:none!important}.rc{margin:0 0 0 0!important}.x-page .container-xl{padding-left:0!important;padding-right:0!important}.x-section,.select-section{border-left:none!important;border-right:none!important;padding:1rem 12px 1rem 12px!important}.main-section{padding-top:0!important}.extra-page{margin-top:0!important}.border-lg-start{border-left:none!important}.gap-lg{height:.5rem!important}}@media (max-width:767.98px){#search-tips{width:calc(100vw - 52px)!important}.border-md-start{border-left:none!important}.gap-md{height:.5rem!important}}@media (max-width:575.98px){.gap-sm{height:.5rem!important}}#top-menu li a.ua, #top-menu li button.ua{background-color:#384050;margin-left: 2px;padding: 9px 18px 9px 16px;border-radius:4px;color:#fff!important;}.usm-wrap{position:relative;}.usm-toggle{border: 0;background: none;padding:0;cursor:pointer;display:inline-flex;align-items:center;}.usm-dropdown{position:absolute;top:calc(100% + -41px);right:24px;width:248px;background:#fff;z-index:550;display:none;border-top-left-radius:4px;border-top-right-radius:4px}.usm-wrap.open .usm-dropdown{display:block}.me-4{margin-right:1.5rem!important}</style>
+<link rel="preload" href="/cdn/default.260526.min.css" as="style">
+<link rel="stylesheet" href="/cdn/default.260526.min.css">
+<link rel="preload" href="/cdn/default_font_400.260526.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high">
+<link rel="preload" href="/cdn/default_font_700.260526.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high">
+
+  
+<title>Каземиров Дмитрий Андреевич - ИНН 744714969770</title>
+<link rel="canonical" href="https://checko.ru/person/744714969770">
+
+<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#5fac62">
+<meta name="description" content="Каземиров Дмитрий Андреевич - ИНН 744714969770 - Руководитель ООО СМК &quot;ВЫСОТА&quot; и еще 4 организаций - Учредитель ООО &quot;ЛЕСАР&quot; и еще 4 организаций">
+<meta name="keywords" content="каземиров дмитрий андреевич, инн 744714969770">
+<link rel="preconnect" href="https://yastatic.net/" crossorigin>
+<link rel="dns-prefetch" href="//an.yandex.ru">
+<link rel="dns-prefetch" href="//mc.yandex.ru">
+<link rel="preconnect" href="https://an.yandex.ru/" crossorigin>
+<script>window.yaContextCb=window.yaContextCb||[]</script>
+<script src="https://yandex.ru/ads/system/context.js" async></script>
+
+
+<style>@font-face{font-family:DefaultFont;src:url(/cdn/default_font_400.260526.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:DefaultFont;src:url(/cdn/default_font_700.260526.woff2) format("woff2");font-weight:700;font-style:normal;font-display:swap}</style>
+
+
+
+<link rel="icon" type="image/png" href="/icons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/icons/favicon-64x64.png" sizes="64x64">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://checko.ru/person/744714969770">
+<meta property="og:title" content="Каземиров Дмитрий Андреевич - ИНН 744714969770">
+<meta property="og:description" content="Каземиров Дмитрий Андреевич - ИНН 744714969770 - Руководитель ООО СМК &quot;ВЫСОТА&quot; и еще 4 организаций - Учредитель ООО &quot;ЛЕСАР&quot; и еще 4 организаций">
+<meta property="og:image" content="https://checko.ru/icons/android-chrome-512x512.png">
+
+<meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="yupLWPx_yQR6lR81jJujOR3ge_zlteQAmIOHx4aA2bw7A7F3BH1JV2tdbTUYNxTzGmfVwp5SUTE7hViQjh_sqA" />
+    
+    
+</head>
+
+<body class="h-100 d-flex flex-column" id="body">
+
+<header>
+<div class="container-xl">
+<ul class="d-flex" id="top-menu" style="max-height:70px">
+<li class="me-auto"><a href="/"><img src="/cdn/images/logo/350x140.webp" width="175" height="70" alt="Чекко" title="Чекко - Проверка контрагентов" id="logo" fetchpriority="high" decoding="async" loading="eager"></a></li>
+<li class="d-none d-sm-inline-block align-self-center"><a class="me-4" href="/company/select?code=all" title="Организации">Организации</a></li>
+<li class="d-none d-sm-inline-block align-self-center"><a class="me-4" href="/entrepreneur/select?code=all" title="Индивидуальные предприниматели">ИП</a></li>
+<li class="d-none d-xl-inline-block align-self-center"><a class="me-4" href="/by" title="Организации и ИП Беларуси">Беларусь</a></li>
+<li class="d-none d-md-inline-block align-self-center"><a rel="nofollow" class="hl me-4" href="/pro" title="Подписка PRO расширяет функционал сервиса и убирает рекламу">Подписка PRO</a></li>
+<li class="d-none d-lg-inline-block align-self-center"><a rel="nofollow" class="me-4" href="/business/about" title="Управление страницей вашего бизнеса">Мой бизнес</a></li>
+<li class="d-none d-md-inline-block align-self-center"><a rel="nofollow" class="me-4" href="/integration/api" title="API для работы с нашими данными">API</a></li>
+<li class="d-none d-lg-inline-block align-self-center"><a rel="nofollow" class="me-4" href="/databases" title="Базы данных российских компаний">Базы данных</a></li>
+<li class="d-none d-xl-inline-block align-self-center"><a rel="nofollow" class="me-4" href="/legality" title="Правовые основания размещения информации">Правовые основания</a></li><li class="align-self-center"><a rel="nofollow" class="ua me-4" href="/login"><svg fill="#fff" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" style="vertical-align:text-top;margin:-2px 8px 0 0"><path d="M235.2-279.59q51-38.52 113.52-60.54 62.52-22.02 131.28-22.02 68.76 0 131.64 22.38 62.88 22.38 113.16 60.42 34.29-41.24 53.31-91.92 19.02-50.69 19.02-108.73 0-131.57-92.78-224.35T480-797.13q-131.57 0-224.35 92.78T162.87-480q0 57.8 18.9 108.49 18.9 50.68 53.43 91.92Zm143.87-199.12q-40.98-40.86-40.98-100.81 0-59.96 40.98-100.94 40.97-40.97 100.93-40.97 59.96 0 100.93 40.97 40.98 40.98 40.98 100.94 0 59.95-40.98 100.81-40.97 40.86-100.93 40.86-59.96 0-100.93-40.86ZM480-71.87q-84.67 0-159.11-32.1-74.43-32.1-129.63-87.29-55.19-55.2-87.29-129.63-32.1-74.44-32.1-159.11 0-84.67 32.1-159.11 32.1-74.43 87.29-129.63 55.2-55.19 129.63-87.29 74.44-32.1 159.11-32.1 84.67 0 159.11 32.1 74.43 32.1 129.63 87.29 55.19 55.2 87.29 129.63 32.1 74.44 32.1 159.11 0 84.67-32.1 159.11-32.1 74.43-87.29 129.63-55.2 55.19-129.63 87.29-74.44 32.1-159.11 32.1Z"/></svg>Войти</a></li>
+<li class="align-self-center"><a id="menu-button" class="d-block" role="button" tabindex="0" data-bs-toggle="offcanvas" data-bs-target="#menu" aria-controls="menu"><svg fill="#111" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24px" height="24px"><path d="M 3 5 A 1.0001 1.0001 0 1 0 3 7 L 21 7 A 1.0001 1.0001 0 1 0 21 5 L 3 5 z M 3 11 A 1.0001 1.0001 0 1 0 3 13 L 21 13 A 1.0001 1.0001 0 1 0 21 11 L 3 11 z M 3 17 A 1.0001 1.0001 0 1 0 3 19 L 21 19 A 1.0001 1.0001 0 1 0 21 17 L 3 17 z"/></svg></a></li>
+</ul>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="menu" style="width:340px">
+<div class="offcanvas-header"><span></span><button type="button" class="btn-close btn-close-white text-reset" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button></div>
+<div class="offcanvas-body" style="margin-top:-26px">
+<ul class="nav flex-column">
+<li class="nav-item"><a class="nav-link" href="/company/select?code=all">Организации</a></li>
+<li class="nav-item"><a class="nav-link" href="/entrepreneur/select?code=all">Индивидуальные предприниматели</a></li>
+<hr>
+<li class="nav-item"><a class="nav-link" href="/by">Беларусь</a></li>
+<hr>
+<li class="nav-item"><a class="nav-link" href="/pro">Подписка PRO</a></li>
+<li class="nav-item"><a class="nav-link" href="/business/about">Мой бизнес</a></li>
+<li class="nav-item"><a class="nav-link" href="/databases">Базы данных</a></li>
+<li class="nav-item"><a class="nav-link" href="/integration/api">API</a></li>
+<hr>
+<li class="nav-item"><a rel="nofollow" class="nav-link" href="/legality">Правовая информация</a></li>
+<li class="nav-item"><a rel="nofollow" class="nav-link" href="/sources">Источники данных</a></li>
+<li class="nav-item"><a rel="nofollow" class="nav-link" href="/agreement">Пользовательское соглашение</a></li>
+<li class="nav-item"><a rel="nofollow" class="nav-link" href="/privacy">Политика конфиденциальности</a></li>
+<li class="nav-item"><a rel="nofollow" class="nav-link" href="/offer">Публичная оферта</a></li>
+<hr>
+<li class="nav-item"><a rel="nofollow" class="nav-link" href="/login">Личный кабинет</a></li>
+<hr>
+<li class="nav-item"><a rel="nofollow" class="nav-link" href="/feedback">Обратная связь</a></li>
+</ul>
+</div></div></div>
+
+<div class="search-panel"><div class="container-xl">
+<div class="d-flex" id="search-flex">
+<div class="flex-fill">
+<form id="search-form" action="/search" method="get"><div>
+<input autocomplete="off" id="search" name="query" type="search" class="form-control" placeholder="Поиск по ОГРН, ИНН, названию или ФИО" aria-label="Поиск">
+<div class="advanced-search-link d-none d-md-block"><a rel="nofollow" class="link fs-14" href="/search/advanced">Расширенный поиск</a></div>
+<button class="search-button" type="submit" aria-label="Быстрый поиск" title="Быстрый поиск">
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#73829f" d="M21.71,20.29,18,16.61A9,9,0,1,0,16.61,18l3.68,3.68a1,1,0,0,0,1.42,0A1,1,0,0,0,21.71,20.29ZM11,18a7,7,0,1,1,7-7A7,7,0,0,1,11,18Z"/></svg>
+</button></div></form>
+</div>
+</div>
+<div id="search-help-dropdown" data-bs-toggle="dropdown" data-bs-offset="0,0"></div><div class="dropdown-menu" id="search-help">Быстрый поиск по названию организации или ИП / реквизитам / ФИО руководителя или учредителя<br>
+Например: <span class="pseudo">ооо ромашка москва</span> или <span class="pseudo">7707049388</span> или <span class="pseudo">кузнецов андрей калуга</span>
+<hr style="margin:0.9rem 0 0.9rem 0">
+Также у нас есть <span class="pseudo">расширенный поиск</span> с фильтрами и выгрузкой в Excel</div>
+<div id="search-tips-dropdown" data-bs-toggle="dropdown" data-bs-offset="0,0"></div><ul class="dropdown-menu" id="search-tips"></ul>
+</div></div>
+
+</header>
+
+<main class="flex-shrink-0 x-page"><div id="loader" style="display:none"></div>
+
+
+<style>.icon-muted svg {color:var(--bs-gray-500)}</style>
+
+<div class="container-xl">
+<div class="d-flex">
+
+<div class="left">
+<div class="lsb">
+<ul class="nav flex-column">
+
+    
+<li class="nav-item">
+<a class="nav-link" href="#" onclick="sidebar_scroll('top')"><i id="top-arrow"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-arrow-right"></use></svg></i>Общая информация</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="#entrepreneur" onclick="sidebar_scroll('entrepreneur')"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-user"></use></svg></i>ИП </a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="#leader" onclick="sidebar_scroll('leader')"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-user"></use></svg></i>Руководитель <span class="count">5</span></a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="#founder" onclick="sidebar_scroll('founder')"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-user"></use></svg></i>Учредитель <span class="count">5</span></a>
+</li>
+
+    
+<li class="nav-item">
+<a class="nav-link" href="#timeline" onclick="sidebar_scroll('timeline')"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-schedule"></use></svg></i>История изменений <span class="count">9</span></a>
+</li>
+    
+
+<li><hr></li>
+<li class="nav-item">
+<span class="nav-link" data-bs-toggle="modal" data-bs-target="#share"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-share"></use></svg></i>Поделиться</span>
+</li>
+
+</ul>
+
+<script>function sidebar_scroll(target){var sidebar_offcanvas=bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sb'));sidebar_offcanvas.hide()}</script>
+</div></div>
+
+<article class="rc mb-3 overflow-x-hidden" id="top">
+
+<div class="x-section main-section">
+  
+
+<div class="d-block d-lg-none mb-3 me-2" style="margin-left:-12px"><a class="btn btn-primary" style="border-radius:0;border-bottom-right-radius:4px;padding-left:8px;padding-right:16px" role="button" tabindex="0" onclick="var sidebar_offcanvas = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sb'));sidebar_offcanvas.toggle();"><span><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-menu-open"></use></svg></span>Список разделов</a></div>
+
+<h1 id="copy-name" class="copy mb-0" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-name')">Каземиров Дмитрий Андреевич</h1>
+
+
+<hr class="mt-4"><div style="min-height:250px;max-width:1304px;display:grid" class="gF2k8M"><div id="yandex_rtb_R-A-474977-1" style="width:100%;place-self:center;text-align:center"><div class="spinner" style="width:5rem;height:5rem;color:var(--bs-gray-300)"></div></div></div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+window.yaContextCb.push(()=>{
+  Ya.Context.AdvManager.render({
+    renderTo: 'yandex_rtb_R-A-474977-1',
+    blockId: 'R-A-474977-1'
+  })})})
+</script>
+<hr class="mb-4">
+
+
+<div class="bs-row gy-2 gx-4">
+
+<div class="col-12 col-xl-6">
+
+<div class="d-flex">
+<div class="flex-shrink-0">
+<img loading="lazy" src="/cdn/images/people/unknown_man.webp" alt="Каземиров Дмитрий Андреевич - 744714969770" title="Каземиров Дмитрий Андреевич" width="92" height="92">
+</div>
+<div class="flex-grow-1 ms-3">
+
+<div class="mb-2">
+<div><strong class="fw-700">ИНН</strong> <strong id="copy-inn" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-inn')">744714969770</strong></div>
+</div>
+
+<p class="mb-3">
+Дмитрий Андреевич Каземиров никогда не регистрировался в качестве индивидуального предпринимателя.
+Является руководителем 2 организаций и учредителем 2 организаций.
+</p>
+
+<div class="mb-3">
+<div class="fw-700">Самозанятость</div>
+<div><span class="check-icon icon-muted"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-check"></use></svg></span>Не является самозанятым<span class="question" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Не является плательщиком налога на профессиональный доход на 13 марта 2026 г."></span></div>
+<div class="text-meta">Согласно данным ФНС на 13 марта 2026 г.</div>
+<span title="Проверить, является ли Каземиров Дмитрий Андреевич самозанятым" class="link-pseudo" onclick="check_self_employed()">Проверить на сегодня</span>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<div class="col-12 col-xl-6 border-xl-start">
+
+<div class="mb-3">
+<div><span class="check-icon"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-check"></use></svg></span>Не является массовым учредителем или руководителем</div>
+<div><span class="check-icon"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-check"></use></svg></span>Не входит в реестр дисквалифицированных лиц</div>
+<div><span class="check-icon"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-check"></use></svg></span>Не входит в реестр недобросовестных поставщиков</div>
+<div><span class="check-icon"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-check"></use></svg></span>Не входит в реестр банкротств</div>
+
+<div><span class="check-icon"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-check"></use></svg></span>Не входит в санкционные списки</div>
+</div>
+
+</div></div>
+  
+<hr style="margin-top:0rem">
+  
+<div id="actions">
+
+<button class="btn btn-tracking me-2" data-bs-toggle="modal" data-bs-target="#login"><svg xmlns="http://www.w3.org/2000/svg" id="tracking-icon" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff"><path d="M104.62-563.46q0-88.46 37.57-163.31 37.58-74.84 101.43-126.38l36.99 46.69q-53.46 43.23-84.73 106-31.26 62.77-31.26 137h-60Zm690.76 0q0-74.23-31.26-137.19-31.27-62.96-84.73-106.2l36.99-46.3q63.85 51.54 101.43 126.38 37.57 74.85 37.57 163.31h-60ZM180-204.62v-59.99h72.31v-298.47q0-80.69 49.81-142.69 49.8-62 127.88-79.31V-810q0-20.77 14.62-35.38Q459.23-860 480-860q20.77 0 35.38 14.62Q530-830.77 530-810v24.92q78.08 17.31 127.88 79.31 49.81 62 49.81 142.69v298.47H780v59.99H180Zm300-293.07Zm0 405.38q-29.92 0-51.11-21.19-21.2-21.19-21.2-51.12h144.62q0 29.93-21.2 51.12Q509.92-92.31 480-92.31Zm-167.69-172.3h335.38v-298.47q0-69.46-49.11-118.57-49.12-49.12-118.58-49.12-69.46 0-118.58 49.12-49.11 49.11-49.11 118.57v298.47Z"/></svg>Мониторинг</button><button id="lists-button" class="btn btn-action me-2" data-bs-toggle="modal" data-bs-target="#login"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M520-410h60v-120h120v-60H580v-120h-60v120H400v60h120v120ZM322.31-260Q292-260 271-281q-21-21-21-51.31v-455.38Q250-818 271-839q21-21 51.31-21h455.38Q808-860 829-839q21 21 21 51.31v455.38Q850-302 829-281q-21 21-51.31 21H322.31Zm0-60h455.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46v-455.38q0-4.62-3.85-8.46-3.84-3.85-8.46-3.85H322.31q-4.62 0-8.46 3.85-3.85 3.84-3.85 8.46v455.38q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85Zm-140 200Q152-120 131-141q-21-21-21-51.31v-515.38h60v515.38q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85h515.38v60H182.31ZM310-800v480-480Z"/></svg><span>Добавить в список</span></button><button id="note-button" class="btn btn-action me-2" data-bs-toggle="modal" data-bs-target="#login"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m69.23-69.23 70.31-240.31q-19-40.61-29.27-83.24Q100-435.4 100-480q0-78.85 29.92-148.2t81.21-120.65q51.29-51.3 120.63-81.22Q401.1-860 479.93-860q78.84 0 148.21 29.92t120.68 81.21q51.31 51.29 81.25 120.63Q860-558.9 860-480.07q0 78.84-29.93 148.21-29.92 69.37-81.22 120.68T628.2-129.93Q558.85-100 480-100q-44.6 0-87.22-10.27-42.63-10.27-83.24-29.27L69.23-69.23ZM158-158l128-38q14.77-4 28.5-3.38 13.73.61 27.5 7.38 32 16 67 24t71 8q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 36 8 71t24 67q7 13 7.69 27.5.69 14.5-3.69 28.5l-38 128Zm292-172h60v-120h120v-60H510v-120h-60v120H330v60h120v120Zm29-149Z"/></svg><span>Добавить заметку</span></button>
+
+</div>
+
+</div>
+
+
+
+<section id="entrepreneur" class="x-section">
+<h2 class="header"><a href="/person/744714969770/entrepreneur">Индивидуальный предприниматель</a></h2>
+
+<p>Каземиров Дмитрий Андреевич не является индивидуальным предпринимателем</p>
+<div class="text-meta">Согласно данным ЕГРИП от ФНС</div>
+
+</section>
+
+<section id="leader" class="x-section">
+<h2 class="header"><a href="/person/744714969770/leader">Руководитель</a></h2>
+
+
+<p>Каземиров Дмитрий Андреевич является руководителем 2 действующих организаций и 3 недействующих организаций</p>
+<div class="text-meta mb-2">Согласно данным ЕГРЮЛ от ФНС</div>
+
+<table class="table table-md">
+<tbody>
+<tr>
+<td class="count">1.</td>
+<td>
+<a class="link fw-700 d-block" href="/company/smk-vysota-1197456033345">ООО СМК &quot;ВЫСОТА&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СТРОИТЕЛЬНО-МОНТАЖНАЯ КОМПАНИЯ &quot;ВЫСОТА&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div><span class="check-icon"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-check"></use></svg></span>Действующая компания</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-ub0U" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-ub0U')">1197456033345</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-hPVB" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-hPVB')">7453330144</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-TEUN" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-TEUN')">744701001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>2 августа 2019 года</div>
+
+<div class="fw-700 mt-2">Генеральный директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Работы по сборке и монтажу сборных конструкций</div>
+<div class="text-meta">43.99.7</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>454084, Челябинская область, г. о. Челябинский, г. Челябинск, ул. Набережная, д. 9, помещ. 2</div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">10 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">1,5 млрд руб.</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">252,1 млн руб.</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="count">2.</td>
+<td>
+<a class="link fw-700 d-block" href="/company/lesar-1246600041214">ООО &quot;ЛЕСАР&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ &quot;ЛЕСАР&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div class="fw-700 text-danger">Юридическим лицом принято решение об изменении места нахождения</div>
+<div class="text-meta">с 27 мая 2026 г.</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-nbLz" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-nbLz')">1246600041214</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-YzhN" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-YzhN')">6671310650</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-PVqN" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-PVqN')">667101001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>29 августа 2024 года</div>
+
+<div class="fw-700 mt-2">Генеральный директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Работы по сборке и монтажу сборных конструкций</div>
+<div class="text-meta">43.99.7</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>620142, Свердловская область, г. о. город Екатеринбург, г. Екатеринбург, ул. Машинная, д. 3А, помещ. 232.1</div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">100 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">9,2 млн руб.</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">1,9 млн руб.</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="count">3.</td>
+<td>
+<a rel="nofollow" class="link fw-700 d-block" href="/company/nou-rins-ehko-evraziya-1127451016340">ООО &quot;НОУ РИНС ЭКО ЕВРАЗИЯ&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ &quot;НОУ РИНС ЭКО ЕВРАЗИЯ&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div class="text-danger fw-700">Юридическое лицо ликвидировано 23 ноября 2018 года
+<br>Исключение из ЕГРЮЛ недействующего юридического лица</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-u5tQ" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-u5tQ')">1127451016340</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-2tNi" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-2tNi')">7451345280</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-2aG1" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-2aG1')">745101001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>29 октября 2012 года</div>
+
+<div class="fw-700 mt-2">Директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Торговля оптовая непродовольственными потребительскими товарами</div>
+<div class="text-meta">46.4</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>454087, Челябинская область, г. Челябинск, ул. Троицкая, д. 1В<div class="text-danger fw-700">Сведения недостоверны (результаты проверки достоверности содержащихся в ЕГРЮЛ сведений о юридическом лице)</div></div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">10 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">...</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">...</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="count">4.</td>
+<td>
+<a rel="nofollow" class="link fw-700 d-block" href="/company/chelintreyd-1157451013840">ООО &quot;ЧЕЛИНТРЕЙД&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ &quot;ЧЕЛИНТРЕЙД&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div class="text-danger fw-700">Юридическое лицо ликвидировано 25 апреля 2019 года
+<br>Исключение из ЕГРЮЛ недействующего юридического лица</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-JTQd" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-JTQd')">1157451013840</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-0aIg" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-0aIg')">7451398027</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-BRCe" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-BRCe')">745101001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>13 октября 2015 года</div>
+
+<div class="fw-700 mt-2">Директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Торговля оптовая прочими бытовыми товарами</div>
+<div class="text-meta">46.49</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>454045, Челябинская область, г. Челябинск, ул. Маслобазовая, д. 7, офис 5<div class="text-danger fw-700">Сведения недостоверны (результаты проверки достоверности содержащихся в ЕГРЮЛ сведений о юридическом лице)</div></div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">10 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">...</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">...</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="count">5.</td>
+<td>
+<a rel="nofollow" class="link fw-700 d-block" href="/company/rid-1127447009337">ООО &quot;РИД&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ &quot;РИД&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div class="text-danger fw-700">Юридическое лицо ликвидировано 23 июня 2014 года
+<br>Исключение из ЕГРЮЛ недействующего юридического лица</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-adGe" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-adGe')">1127447009337</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-1lud" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-1lud')">7447211999</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-Y5IA" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-Y5IA')">744701001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>18 июля 2012 года</div>
+
+<div class="fw-700 mt-2">Директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Удаление и обработка твердых отходов</div>
+<div class="text-meta">90.00.2</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>454084, Челябинская область, г. Челябинск, ул. Калинина, д. 30, к.а, офис 4</div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">10 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">...</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">...</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+
+</section>
+
+<section id="founder" class="x-section">
+<h2 class="header"><a href="/person/744714969770/founder">Учредитель</a></h2>
+
+
+<p>Каземиров Дмитрий Андреевич является учредителем 2 действующих организаций и 3 недействующих организаций</p>
+<div class="text-meta mb-2">Согласно данным ЕГРЮЛ от ФНС</div>
+
+<table class="table table-md">
+<tbody>
+<tr>
+<td class="count">1.</td>
+<td>
+<a class="link fw-700 d-block" href="/company/smk-vysota-1197456033345">ООО СМК &quot;ВЫСОТА&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СТРОИТЕЛЬНО-МОНТАЖНАЯ КОМПАНИЯ &quot;ВЫСОТА&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div><span class="check-icon"><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-check"></use></svg></span>Действующая компания</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-gd37" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-gd37')">1197456033345</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-r4WH" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-r4WH')">7453330144</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-n3hs" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-n3hs')">744701001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>2 августа 2019 года</div>
+
+<div class="fw-700 mt-2">Генеральный директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Работы по сборке и монтажу сборных конструкций</div>
+<div class="text-meta">43.99.7</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>454084, Челябинская область, г. о. Челябинский, г. Челябинск, ул. Набережная, д. 9, помещ. 2</div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">10 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">1,5 млрд руб.</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">252,1 млн руб.</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="count">2.</td>
+<td>
+<a class="link fw-700 d-block" href="/company/lesar-1246600041214">ООО &quot;ЛЕСАР&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ &quot;ЛЕСАР&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div class="fw-700 text-danger">Юридическим лицом принято решение об изменении места нахождения</div>
+<div class="text-meta">с 27 мая 2026 г.</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-wFA8" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-wFA8')">1246600041214</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-v62u" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-v62u')">6671310650</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-DnCP" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-DnCP')">667101001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>29 августа 2024 года</div>
+
+<div class="fw-700 mt-2">Генеральный директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Работы по сборке и монтажу сборных конструкций</div>
+<div class="text-meta">43.99.7</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>620142, Свердловская область, г. о. город Екатеринбург, г. Екатеринбург, ул. Машинная, д. 3А, помещ. 232.1</div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">100 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">9,2 млн руб.</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">1,9 млн руб.</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="count">3.</td>
+<td>
+<a rel="nofollow" class="link fw-700 d-block" href="/company/nou-rins-ehko-evraziya-1127451016340">ООО &quot;НОУ РИНС ЭКО ЕВРАЗИЯ&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ &quot;НОУ РИНС ЭКО ЕВРАЗИЯ&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div class="text-danger fw-700">Юридическое лицо ликвидировано 23 ноября 2018 года
+<br>Исключение из ЕГРЮЛ недействующего юридического лица</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-B0Ys" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-B0Ys')">1127451016340</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-h56Z" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-h56Z')">7451345280</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-Tfwm" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-Tfwm')">745101001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>29 октября 2012 года</div>
+
+<div class="fw-700 mt-2">Директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Торговля оптовая непродовольственными потребительскими товарами</div>
+<div class="text-meta">46.4</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>454087, Челябинская область, г. Челябинск, ул. Троицкая, д. 1В<div class="text-danger fw-700">Сведения недостоверны (результаты проверки достоверности содержащихся в ЕГРЮЛ сведений о юридическом лице)</div></div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">10 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">...</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">...</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="count">4.</td>
+<td>
+<a rel="nofollow" class="link fw-700 d-block" href="/company/rid-1127447009337">ООО &quot;РИД&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ &quot;РИД&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div class="text-danger fw-700">Юридическое лицо ликвидировано 23 июня 2014 года
+<br>Исключение из ЕГРЮЛ недействующего юридического лица</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-b4rq" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-b4rq')">1127447009337</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-01EX" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-01EX')">7447211999</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-2rZx" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-2rZx')">744701001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>18 июля 2012 года</div>
+
+<div class="fw-700 mt-2">Директор</div>
+<strong>Каземиров Дмитрий Андреевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Удаление и обработка твердых отходов</div>
+<div class="text-meta">90.00.2</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>454084, Челябинская область, г. Челябинск, ул. Калинина, д. 30, к.а, офис 4</div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">10 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">...</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">...</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="count">5.</td>
+<td>
+<a rel="nofollow" class="link fw-700 d-block" href="/company/sk-prostory-1167456139861">ООО СК &quot;ПРОСТОРЫ&quot;</a>
+
+<div class="mb-2">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СТРОИТЕЛЬНАЯ КОМПАНИЯ &quot;ПРОСТОРЫ&quot;</div>
+
+<div class="bs-row gy-2 gx-4">
+<div class="col-12 col-md-6">
+
+<div class="text-danger fw-700">Юридическое лицо ликвидировано 30 ноября 2021 года
+<br>Исключение из ЕГРЮЛ юридического лица в связи наличием в ЕГРЮЛ сведений о нем, в отношении которых внесена запись о недостоверности</div>
+
+<div class="mt-2"><span class="fw-700">ОГРН</span> <span id="copy-CUb0" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-CUb0')">1167456139861</span></div>
+
+<div><span class="fw-700">ИНН</span> <span id="copy-sxS7" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-sxS7')">7451416357</span></div>
+
+<div><span class="fw-700">КПП</span> <span id="copy-JDdZ" class="copy" data-bs-html="true" data-bs-toggle="tooltip" data-bs-animation="false" data-bs-title="Копировать" onclick="copyToClipboard('copy-JDdZ')">745101001</span></div>
+
+<div class="fw-700 mt-2">Дата регистрации</div>
+<div>12 декабря 2016 года</div>
+
+<div class="fw-700 mt-2">Генеральный директор</div>
+<strong>Белов Максим Григорьевич</strong>
+
+</div>
+<div class="col-12 col-md-6 border-md-start">
+
+<div class="fw-700">Основной вид деятельности</div>
+<div>Работы по сборке и монтажу сборных конструкций</div>
+<div class="text-meta">43.99.7</div>
+
+<div class="fw-700 mt-2">Юридический адрес</div>
+<div>454091, Челябинская область, г. Челябинск, пр-кт Ленина, д. 33А, пом/офис 1/2<div class="text-danger fw-700">Сведения недостоверны (результаты проверки достоверности содержащихся в ЕГРЮЛ сведений о юридическом лице)</div></div>
+    
+<div class="d-flex flex-wrap">
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Уставный капитал</div>
+<div class="text-nowrap">10 тыс. руб.</div>
+</div>
+<div class="me-5">
+<div class="fw-700 mt-2 text-nowrap">Выручка</div>
+<div class="text-nowrap">6,4 млн руб.</div>
+</div>
+<div class="">
+<div class="fw-700 mt-2 text-nowrap">Чистая прибыль</div>
+<div class="text-nowrap">9 тыс. руб.</div>
+</div>
+</div>
+
+</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+
+</section>
+
+<section class="x-section" style="padding:0;background:none;background-color:transparent;border:none;display:grid">
+<div style="min-height:463px;display:grid;place-content:center" class="gF2k8M"><div id="yandex_rtb_R-A-474977-4" style="width:100%;place-self:center;text-align:center"><div class="spinner" style="width:5rem;height:5rem;color:var(--bs-gray-300)"></div></div></div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+window.yaContextCb.push(()=>{
+  Ya.Context.AdvManager.render({
+    renderTo: 'yandex_rtb_R-A-474977-4',
+    blockId: 'R-A-474977-4'
+  })})})
+</script>
+</section>
+
+
+
+<section id="timeline" class="x-section">
+<h2 class="header"><a href="/person/744714969770/timeline">История изменений</a></h2>
+
+
+<div class="timeline-events">
+
+
+
+
+<div class="timeline-event d-flex">
+<div class="timeline-icon timeline-blue"><span><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-briefcase"></use></svg></span></div>
+<div class="timeline-content">
+<div class="timeline-date">29.08.2024</div>
+<div>
+Каземиров Дмитрий Андреевич становится учредителем (участником) <a class="link" href="/company/lesar-1246600041214">ООО &quot;ЛЕСАР&quot;</a>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+<div class="timeline-event d-flex">
+<div class="timeline-icon timeline-blue"><span><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-briefcase"></use></svg></span></div>
+<div class="timeline-content">
+<div class="timeline-date">03.11.2023</div>
+<div>
+Каземиров Дмитрий Андреевич становится руководителем <a class="link" href="/company/smk-vysota-1197456033345">ООО СМК &quot;ВЫСОТА&quot;</a>, должность &mdash; генеральный директор
+</div>
+</div>
+</div>
+
+
+
+
+
+
+<div class="timeline-event d-flex">
+<div class="timeline-icon timeline-blue"><span><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-briefcase"></use></svg></span></div>
+<div class="timeline-content">
+<div class="timeline-date">25.09.2023</div>
+<div>
+Каземиров Дмитрий Андреевич становится учредителем (участником) <a class="link" href="/company/smk-vysota-1197456033345">ООО СМК &quot;ВЫСОТА&quot;</a>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+<div class="timeline-event d-flex">
+<div class="timeline-icon timeline-blue"><span><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-briefcase"></use></svg></span></div>
+<div class="timeline-content">
+<div class="timeline-date">12.12.2016</div>
+<div>
+Каземиров Дмитрий Андреевич становится учредителем (участником) <a class="link" href="/company/sk-prostory-1167456139861">ООО СК &quot;ПРОСТОРЫ&quot;</a>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+<div class="timeline-event d-flex">
+<div class="timeline-icon timeline-blue"><span><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-briefcase"></use></svg></span></div>
+<div class="timeline-content">
+<div class="timeline-date">13.10.2015</div>
+<div>
+Каземиров Дмитрий Андреевич становится руководителем <a class="link" href="/company/chelintreyd-1157451013840">ООО &quot;ЧЕЛИНТРЕЙД&quot;</a>, должность &mdash; директор
+</div>
+</div>
+</div>
+
+
+
+
+
+</div>
+
+<div class="mt-3">
+<a class="link" href="/person/744714969770/timeline">Полная история изменений с 18 июля 2012 года</a>
+</div>
+
+
+</section>
+
+</article>
+
+<div class="offcanvas offcanvas-start xp" tabindex="-1" id="sb" style="width:100%">
+<div class="offcanvas-header">
+<div class="offcanvas-title fw-700 pe-3">Каземиров Дмитрий Андреевич</div>
+<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+</div>
+<div class="offcanvas-body pt-0">
+<ul class="nav flex-column">
+
+
+<li class="nav-item">
+<a class="nav-link" href="/person/744714969770"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-arrow-right"></use></svg></i>Общая информация</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="/person/744714969770/entrepreneur"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-user"></use></svg></i>ИП </a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="/person/744714969770/leader"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-user"></use></svg></i>Руководитель <span class="count">5</span></a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="/person/744714969770/founder"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-user"></use></svg></i>Учредитель <span class="count">5</span></a>
+</li>
+
+    
+<li class="nav-item">
+<a class="nav-link" href="/person/744714969770/timeline"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-schedule"></use></svg></i>История изменений <span class="count">9</span></a>
+</li>
+    
+
+<li><hr></li>
+<li class="nav-item">
+<span class="nav-link" data-bs-toggle="modal" data-bs-target="#share"><i><svg width="24" height="24" aria-hidden="true"><use href="/cdn/icons.260501.svg#icon-share"></use></svg></i>Поделиться</span>
+</li>
+
+</ul>
+
+<script>function sidebar_scroll(target){var sidebar_offcanvas=bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sb'));sidebar_offcanvas.hide()}</script>
+</div>
+</div>
+
+</div>
+</div>
+
+
+
+<div class="modal fade" id="share" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"></div></div>
+
+<div class="modal fade" id="login" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header" style="border:none;padding-bottom:0;background:#fff"><div class="modal-title" style="height:36px"></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div><div class="modal-body pt-0" style="padding-bottom: 0.75rem;margin-top:-0.5rem">
+<div class="bs-row gx-4">
+<div class="d-none d-md-block col-12 col-md-5 text-center" style="height: 200px">
+<img style="height:200px" src="/cdn/images/user/login-free.webp" alt="Авторизация" loading="lazy">
+</div>
+<div class="col-12 col-md-7">
+<div class="h4 mb-3">Войдите в личный кабинет</div>
+<p class="mb-3">Чтобы открыть полный доступ к мониторингу контрагентов, заметкам, спискам и отчетам, войдите в личный кабинет</p><p class="login-free">Регистрация бесплатна и займет одну минуту</p>
+<a href="/login" class="btn btn-primary me-2 mb-3" type="submit">Войти</a><a class="btn btn-outlined mb-3" href="/sign-up">Зарегистрироваться</a>
+</div></div></div></div></div></div>
+
+<div class="modal fade" id="check_self_employed" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header"><div class="modal-title">Проверка на самозанятость</div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div><div class="modal-body" style="padding:0"><div id="self_employed_spinner" class="mx-auto text-center" style="height:306px;padding-top:110px"><div class="spinner mx-auto" style="width:4.75rem;height:4.75rem;color:var(--bs-gray-400)" role="status"></div></div><iframe width="100%" style="display:none" height="300px" id="self_employed_iframe" src=""></iframe></div></div></div></div>
+
+
+<script>
+function check_self_employed() {
+document.getElementById('self_employed_iframe').setAttribute('src', '/check/self-employed/744714969770/ecf32a0d-4324-5f6f-b2e4-7cfb0c6fbde2');
+document.getElementById('self_employed_iframe').setAttribute('onload', 'document.getElementById("self_employed_spinner").style.display="none"; document.getElementById("self_employed_iframe").setAttribute("style", "")');
+var check_self_employed_modal = new bootstrap.Modal(document.getElementById('check_self_employed'), {keyboard: false});
+check_self_employed_modal.show();
+}
+</script>
+
+<script type='application/ld+json'>
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Каземиров Дмитрий Андреевич",
+  "taxID": "744714969770",
+  "url": "https://checko.ru/person/744714969770",
+  "description": "Актуальные сведения о Каземирове Дмитрии Андреевиче — ИНН 744714969770 — является ли индивидуальным предпринимателем, руководителем или учредителем организаций."
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+let share_data = JSON.parse('{"inn":"744714969770"}');
+let modal_share = document.getElementById('share'); modal_share.addEventListener('show.bs.modal', function (event) { if (modal_share.innerHTML.length < 128) { get_modal_content("/modal/share", share_data).then(function(x) { var script = document.createElement('script'); script.setAttribute('type', 'text/javascript'); script.setAttribute('src', 'https://yastatic.net/share2/share.js');document.head.appendChild(script); modal_share.innerHTML = x; });}});
+});
+</script></main>
+<footer>
+<div class="container-xl">
+<div class="bs-row">
+<div class="col-12 col-md-4">
+<div class="fs-20 mb-2">Портал &quot;Чекко&quot;</div>
+<a class="link-light" href="/legality">Правовые основания размещения информации</a><br>
+<a class="link-light" href="/agreement">Пользовательское соглашение</a><br>
+<a class="link-light" href="/privacy">Политика конфиденциальности</a><br>
+<a class="link-light" href="/offer">Публичная оферта</a>
+<div class="fs-20 mt-4 mb-2">Контакты</div>
+<a class="link-light" href="/feedback">Отправить сообщение</a>
+</div>
+
+<div class="col-12 col-md-8"><div class="gap-md"></div><div class="gap-md"></div>
+
+<div class="fs-20 mb-2">Наши преимущества</div>
+<ul><li>&bull;&nbsp;&nbsp;Удобство использования &mdash; четкое и структурированное представление ключевых данных контрагентов</li><li class="mt-1">&bull;&nbsp;&nbsp;Анализ связей &mdash; узнайте больше о деятельности вашего поставщика или конкурента, изучив аффилированные организации</li><li class="mt-1">&bull;&nbsp;&nbsp;Официальные данные &mdash; мы публикуем открытую и общедоступную информацию только из официальных источников</li><li class="mt-1">&bull;&nbsp;&nbsp;Ежедневные обновления &mdash; информация из баз ФНС (ЕГРЮЛ и ЕГРИП) обновляется ежедневно</li><li class="mt-1">&bull;&nbsp;&nbsp;Полностью бесплатно &mdash; доступ ко всему функционалу портала полностью бесплатен и не требует регистрации</li><li class="mt-1">&bull;&nbsp;&nbsp;API &mdash; интеграция данных ФНС, Росстата, ФССП, ФАС и Генпрокуратуры в ваши информационные системы</li>
+</ul><br><a class="link-light" rel="nofollow" href="/download/yandex">Скачать Яндекс Браузер с поиском &quot;Чекко&quot;</a><br><a class="link-light d-inline-block mt-1" target="_blank" rel="nofollow" href="https://chrome.google.com/webstore/detail/%D1%87%D0%B5%D0%BA%D0%BA%D0%BE/oagaeikjnjbjcgelefgmomonfhpidclg">Скачать расширение для Chrome и Яндекс Браузера</a><br>
+<a class="link-light d-inline-block mt-1" rel="nofollow" href="/widget">Виджет &quot;Проверенная компания&quot;</a>
+</div></div><hr><div class="text-center mt-4">&copy; 2019&ndash;2026 checko.ru</div></div></footer>
+
+<div style="bottom: 0; left: 0; position: fixed; width: 100%; z-index: 100;" id="privacy_accept"><div style="position: absolute; left: 0; bottom: 0; width: 360px; z-index: 1; background: #ffe3aa; color: #111; padding: 0 0.75rem 1rem 1rem; font-size: 14px;"><div style="height: 12px; text-align: right"><button type="button" class="btn-close" style="padding:1em .25em" onclick="document.getElementById('privacy_accept').classList.add('d-none');"></button></div>Мы используем файлы cookie для обеспечения работы сайта, анализа и улучшения сервисов. Продолжая пользоваться сайтом, вы подтверждаете своё согласие на использование cookie и обработку персональных данных в соответствии с <a target="_blank" rel="nofollow" href="/privacy" class="link">Политикой конфиденциальности</a>.</div></div>
+<script src="/cdn/default.260328.min.js" defer></script><script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)}; m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)}) (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym"); ym(56298238, "init", {trackLinks:true, accurateTrackBounce:true });</script><noscript><div><img src="https://mc.yandex.ru/watch/56298238" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+</body>
+</html>

@@ -1,0 +1,631 @@
+﻿{
+    "companies":  {
+                      "7453330144":  {
+                                         "inn":  "7453330144",
+                                         "created_at":  "2026-06-28T07:00:28Z",
+                                         "reports":  [
+
+                                                     ],
+                                         "name":  "ООО СМК \"ВЫСОТА\"",
+                                         "ogrn":  "1197456033345",
+                                         "director":  "Каземиров Дмитрий Андреевич",
+                                         "staff_count":  "336 people",
+                                         "revenue":  "1,5 млрд руб.",
+                                         "net_profit":  "252,1 млн руб.",
+                                         "dreamjob_reviews":  12,
+                                         "latest_report":  {
+                                                               "inn":  "7453330144",
+                                                               "generated_at":  "2026-06-28T07:00:28Z",
+                                                               "platform_status":  "signals_found",
+                                                               "risk_score":  35,
+                                                               "summary":  [
+                                                                               "FNS legal card was not collected automatically.",
+                                                                               "Manual source checks required: 8.",
+                                                                               "2GIS reviews: automatic collection failed."
+                                                                           ],
+                                                               "legal_card":  {
+
+                                                                              },
+                                                               "confirmation_channels":  [
+                                                                                             {
+                                                                                                 "source":  "contacts_public",
+                                                                                                 "value":  "Official email or phone is not confirmed automatically",
+                                                                                                 "type":  "manual_required"
+                                                                                             }
+                                                                                         ],
+                                                               "sources":  [
+                                                                               {
+                                                                                   "code":  "fns_egrul",
+                                                                                   "title":  "FNS EGRUL/EGRIP",
+                                                                                   "status":  "manual_review",
+                                                                                   "url":  "https://egrul.nalog.ru/",
+                                                                                   "collected":  {
+
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+                                                                                                  "Удаленный сервер возвратил ошибку: (404) Не найден."
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Verify legal name, status, OGRN, KPP, address and director.",
+                                                                                                        "If automatic FNS collection fails, attach an EGRUL extract manually.",
+                                                                                                        "Automatic FNS endpoint failed; open egrul.nalog.ru and attach the extract manually."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "bo_nalog",
+                                                                                   "title":  "FNS accounting reports",
+                                                                                   "status":  "manual_review",
+                                                                                   "url":  "https://bo.nalog.ru/search?query=7453330144",
+                                                                                   "collected":  {
+                                                                                                     "planned_fields":  [
+                                                                                                                            "revenue",
+                                                                                                                            "profit_or_loss",
+                                                                                                                            "assets",
+                                                                                                                            "reporting_dynamics"
+                                                                                                                        ]
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Open the source and save the check result in the company card.",
+                                                                                                        "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "fedresurs",
+                                                                                   "title":  "Fedresurs bankruptcy and material facts",
+                                                                                   "status":  "manual_review",
+                                                                                   "url":  "https://fedresurs.ru/search/entity?searchString=7453330144",
+                                                                                   "collected":  {
+                                                                                                     "planned_fields":  [
+                                                                                                                            "bankruptcy_messages",
+                                                                                                                            "liquidation_or_reorganization",
+                                                                                                                            "material_facts",
+                                                                                                                            "pledges_or_notices"
+                                                                                                                        ]
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Open the source and save the check result in the company card.",
+                                                                                                        "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "kad_arbitr",
+                                                                                   "title":  "Arbitration cases",
+                                                                                   "status":  "manual_review",
+                                                                                   "url":  "https://kad.arbitr.ru/",
+                                                                                   "collected":  {
+                                                                                                     "planned_fields":  [
+                                                                                                                            "defendant_cases",
+                                                                                                                            "payment_and_contract_disputes",
+                                                                                                                            "case_frequency",
+                                                                                                                            "claim_amounts"
+                                                                                                                        ]
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Open the source and save the check result in the company card.",
+                                                                                                        "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "zakupki_rnp",
+                                                                                   "title":  "Government procurement bad-faith supplier registry",
+                                                                                   "status":  "manual_review",
+                                                                                   "url":  "https://zakupki.gov.ru/epz/dishonestsupplier/search/results.html?searchString=7453330144",
+                                                                                   "collected":  {
+                                                                                                     "planned_fields":  [
+                                                                                                                            "rnp_presence",
+                                                                                                                            "inclusion_reason",
+                                                                                                                            "registry_period"
+                                                                                                                        ]
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Open the source and save the check result in the company card.",
+                                                                                                        "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "fssp",
+                                                                                   "title":  "FSSP enforcement proceedings",
+                                                                                   "status":  "manual_review",
+                                                                                   "url":  "https://fssp.gov.ru/iss/ip/",
+                                                                                   "collected":  {
+                                                                                                     "planned_fields":  [
+                                                                                                                            "active_enforcement_proceedings",
+                                                                                                                            "debt_amounts",
+                                                                                                                            "debt_type"
+                                                                                                                        ]
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Open the source and save the check result in the company card.",
+                                                                                                        "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "sro",
+                                                                                   "title":  "NOSTROY/NOPRIZ SRO membership",
+                                                                                   "status":  "manual_review",
+                                                                                   "url":  "https://reestr.nostroy.ru/",
+                                                                                   "collected":  {
+                                                                                                     "planned_fields":  [
+                                                                                                                            "sro_membership",
+                                                                                                                            "responsibility_level",
+                                                                                                                            "suspensions_or_exclusions"
+                                                                                                                        ]
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Open the source and save the check result in the company card.",
+                                                                                                        "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "contacts_public",
+                                                                                   "title":  "Official company contacts",
+                                                                                   "status":  "manual_review",
+                                                                                   "url":  "https://www.google.com/search?q=7453330144%20official%20site%20email%20phone",
+                                                                                   "collected":  {
+                                                                                                     "planned_fields":  [
+                                                                                                                            "official_site",
+                                                                                                                            "official_email",
+                                                                                                                            "official_phone",
+                                                                                                                            "vacancy_contact_match"
+                                                                                                                        ]
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Open the source and save the check result in the company card.",
+                                                                                                        "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "checko_company_card",
+                                                                                   "title":  "Checko.ru company card",
+                                                                                   "status":  "ok",
+                                                                                   "url":  "https://checko.ru/company/smk-vysota-1197456033345",
+                                                                                   "collected":  {
+                                                                                                     "taxes_paid":  "330,4 млн руб.",
+                                                                                                     "net_profit":  "252,1 млн руб.",
+                                                                                                     "reliability_facts":  {
+                                                                                                                               "positive":  [
+
+                                                                                                                                            ],
+                                                                                                                               "attention":  [
+
+                                                                                                                                             ],
+                                                                                                                               "negative":  [
+
+                                                                                                                                            ]
+                                                                                                                           },
+                                                                                                     "director_related_companies":  {
+                                                                                                                                        "person_url":  "https://checko.ru/person/744714969770",
+                                                                                                                                        "leader_companies":  [
+                                                                                                                                                                 {
+                                                                                                                                                                     "role":  "leader",
+                                                                                                                                                                     "name":  "ООО СМК \"ВЫСОТА\"",
+                                                                                                                                                                     "inn":  "7453330144",
+                                                                                                                                                                     "ogrn":  "1197456033345",
+                                                                                                                                                                     "status":  "active",
+                                                                                                                                                                     "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                     "url":  "https://checko.ru/company/smk-vysota-1197456033345",
+                                                                                                                                                                     "is_current_company":  true
+                                                                                                                                                                 },
+                                                                                                                                                                 {
+                                                                                                                                                                     "role":  "leader",
+                                                                                                                                                                     "name":  "ООО \"ЛЕСАР\"",
+                                                                                                                                                                     "inn":  "6671310650",
+                                                                                                                                                                     "ogrn":  "1246600041214",
+                                                                                                                                                                     "status":  "has_warning_or_inactive",
+                                                                                                                                                                     "revenue_or_capital_first_metric":  "100 тыс. руб.",
+                                                                                                                                                                     "url":  "https://checko.ru/company/lesar-1246600041214",
+                                                                                                                                                                     "is_current_company":  false
+                                                                                                                                                                 },
+                                                                                                                                                                 {
+                                                                                                                                                                     "role":  "leader",
+                                                                                                                                                                     "name":  "ООО \"НОУ РИНС ЭКО ЕВРАЗИЯ\"",
+                                                                                                                                                                     "inn":  "7451345280",
+                                                                                                                                                                     "ogrn":  "1127451016340",
+                                                                                                                                                                     "status":  "has_warning_or_inactive",
+                                                                                                                                                                     "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                     "url":  "https://checko.ru/company/nou-rins-ehko-evraziya-1127451016340",
+                                                                                                                                                                     "is_current_company":  false
+                                                                                                                                                                 },
+                                                                                                                                                                 {
+                                                                                                                                                                     "role":  "leader",
+                                                                                                                                                                     "name":  "ООО \"ЧЕЛИНТРЕЙД\"",
+                                                                                                                                                                     "inn":  "7451398027",
+                                                                                                                                                                     "ogrn":  "1157451013840",
+                                                                                                                                                                     "status":  "has_warning_or_inactive",
+                                                                                                                                                                     "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                     "url":  "https://checko.ru/company/chelintreyd-1157451013840",
+                                                                                                                                                                     "is_current_company":  false
+                                                                                                                                                                 },
+                                                                                                                                                                 {
+                                                                                                                                                                     "role":  "leader",
+                                                                                                                                                                     "name":  "ООО \"РИД\"",
+                                                                                                                                                                     "inn":  "7447211999",
+                                                                                                                                                                     "ogrn":  "1127447009337",
+                                                                                                                                                                     "status":  "has_warning_or_inactive",
+                                                                                                                                                                     "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                     "url":  "https://checko.ru/company/rid-1127447009337",
+                                                                                                                                                                     "is_current_company":  false
+                                                                                                                                                                 }
+                                                                                                                                                             ],
+                                                                                                                                        "founder_companies":  [
+                                                                                                                                                                  {
+                                                                                                                                                                      "role":  "founder",
+                                                                                                                                                                      "name":  "ООО СМК \"ВЫСОТА\"",
+                                                                                                                                                                      "inn":  "7453330144",
+                                                                                                                                                                      "ogrn":  "1197456033345",
+                                                                                                                                                                      "status":  "active",
+                                                                                                                                                                      "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                      "url":  "https://checko.ru/company/smk-vysota-1197456033345",
+                                                                                                                                                                      "is_current_company":  true
+                                                                                                                                                                  },
+                                                                                                                                                                  {
+                                                                                                                                                                      "role":  "founder",
+                                                                                                                                                                      "name":  "ООО \"ЛЕСАР\"",
+                                                                                                                                                                      "inn":  "6671310650",
+                                                                                                                                                                      "ogrn":  "1246600041214",
+                                                                                                                                                                      "status":  "has_warning_or_inactive",
+                                                                                                                                                                      "revenue_or_capital_first_metric":  "100 тыс. руб.",
+                                                                                                                                                                      "url":  "https://checko.ru/company/lesar-1246600041214",
+                                                                                                                                                                      "is_current_company":  false
+                                                                                                                                                                  },
+                                                                                                                                                                  {
+                                                                                                                                                                      "role":  "founder",
+                                                                                                                                                                      "name":  "ООО \"НОУ РИНС ЭКО ЕВРАЗИЯ\"",
+                                                                                                                                                                      "inn":  "7451345280",
+                                                                                                                                                                      "ogrn":  "1127451016340",
+                                                                                                                                                                      "status":  "has_warning_or_inactive",
+                                                                                                                                                                      "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                      "url":  "https://checko.ru/company/nou-rins-ehko-evraziya-1127451016340",
+                                                                                                                                                                      "is_current_company":  false
+                                                                                                                                                                  },
+                                                                                                                                                                  {
+                                                                                                                                                                      "role":  "founder",
+                                                                                                                                                                      "name":  "ООО \"РИД\"",
+                                                                                                                                                                      "inn":  "7447211999",
+                                                                                                                                                                      "ogrn":  "1127447009337",
+                                                                                                                                                                      "status":  "has_warning_or_inactive",
+                                                                                                                                                                      "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                      "url":  "https://checko.ru/company/rid-1127447009337",
+                                                                                                                                                                      "is_current_company":  false
+                                                                                                                                                                  },
+                                                                                                                                                                  {
+                                                                                                                                                                      "role":  "founder",
+                                                                                                                                                                      "name":  "ООО СК \"ПРОСТОРЫ\"",
+                                                                                                                                                                      "inn":  "7451416357",
+                                                                                                                                                                      "ogrn":  "1167456139861",
+                                                                                                                                                                      "status":  "has_warning_or_inactive",
+                                                                                                                                                                      "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                      "url":  "https://checko.ru/company/sk-prostory-1167456139861",
+                                                                                                                                                                      "is_current_company":  false
+                                                                                                                                                                  }
+                                                                                                                                                              ],
+                                                                                                                                        "all_companies":  [
+                                                                                                                                                              {
+                                                                                                                                                                  "role":  "leader",
+                                                                                                                                                                  "name":  "ООО СМК \"ВЫСОТА\"",
+                                                                                                                                                                  "inn":  "7453330144",
+                                                                                                                                                                  "ogrn":  "1197456033345",
+                                                                                                                                                                  "status":  "active",
+                                                                                                                                                                  "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                  "url":  "https://checko.ru/company/smk-vysota-1197456033345",
+                                                                                                                                                                  "is_current_company":  true
+                                                                                                                                                              },
+                                                                                                                                                              {
+                                                                                                                                                                  "role":  "leader",
+                                                                                                                                                                  "name":  "ООО \"ЛЕСАР\"",
+                                                                                                                                                                  "inn":  "6671310650",
+                                                                                                                                                                  "ogrn":  "1246600041214",
+                                                                                                                                                                  "status":  "has_warning_or_inactive",
+                                                                                                                                                                  "revenue_or_capital_first_metric":  "100 тыс. руб.",
+                                                                                                                                                                  "url":  "https://checko.ru/company/lesar-1246600041214",
+                                                                                                                                                                  "is_current_company":  false
+                                                                                                                                                              },
+                                                                                                                                                              {
+                                                                                                                                                                  "role":  "leader",
+                                                                                                                                                                  "name":  "ООО \"НОУ РИНС ЭКО ЕВРАЗИЯ\"",
+                                                                                                                                                                  "inn":  "7451345280",
+                                                                                                                                                                  "ogrn":  "1127451016340",
+                                                                                                                                                                  "status":  "has_warning_or_inactive",
+                                                                                                                                                                  "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                  "url":  "https://checko.ru/company/nou-rins-ehko-evraziya-1127451016340",
+                                                                                                                                                                  "is_current_company":  false
+                                                                                                                                                              },
+                                                                                                                                                              {
+                                                                                                                                                                  "role":  "leader",
+                                                                                                                                                                  "name":  "ООО \"ЧЕЛИНТРЕЙД\"",
+                                                                                                                                                                  "inn":  "7451398027",
+                                                                                                                                                                  "ogrn":  "1157451013840",
+                                                                                                                                                                  "status":  "has_warning_or_inactive",
+                                                                                                                                                                  "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                  "url":  "https://checko.ru/company/chelintreyd-1157451013840",
+                                                                                                                                                                  "is_current_company":  false
+                                                                                                                                                              },
+                                                                                                                                                              {
+                                                                                                                                                                  "role":  "leader",
+                                                                                                                                                                  "name":  "ООО \"РИД\"",
+                                                                                                                                                                  "inn":  "7447211999",
+                                                                                                                                                                  "ogrn":  "1127447009337",
+                                                                                                                                                                  "status":  "has_warning_or_inactive",
+                                                                                                                                                                  "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                  "url":  "https://checko.ru/company/rid-1127447009337",
+                                                                                                                                                                  "is_current_company":  false
+                                                                                                                                                              },
+                                                                                                                                                              {
+                                                                                                                                                                  "role":  "founder",
+                                                                                                                                                                  "name":  "ООО СК \"ПРОСТОРЫ\"",
+                                                                                                                                                                  "inn":  "7451416357",
+                                                                                                                                                                  "ogrn":  "1167456139861",
+                                                                                                                                                                  "status":  "has_warning_or_inactive",
+                                                                                                                                                                  "revenue_or_capital_first_metric":  "10 тыс. руб.",
+                                                                                                                                                                  "url":  "https://checko.ru/company/sk-prostory-1167456139861",
+                                                                                                                                                                  "is_current_company":  false
+                                                                                                                                                              }
+                                                                                                                                                          ],
+                                                                                                                                        "errors":  [
+
+                                                                                                                                                   ]
+                                                                                                                                    },
+                                                                                                     "capital":  "394,5 млн руб.",
+                                                                                                     "net_profit_change_percent":  "61",
+                                                                                                     "description":  "ООО СМК \"ВЫСОТА\" - г. Челябинск - ИНН 7453330144 - ОГРН 1197456033345 - Генеральный директор Каземиров Дмитрий Андреевич - Реквизиты - Контакты - Учредители - Бухгалтерская отчетность - Исполнительные производства - Проверки",
+                                                                                                     "finance_year":  "2025",
+                                                                                                     "inn":  "7453330144",
+                                                                                                     "founder_other_companies_count":  "5",
+                                                                                                     "company_url":  "https://checko.ru/company/smk-vysota-1197456033345",
+                                                                                                     "capital_change_percent":  "109",
+                                                                                                     "title":  "ООО СМК \"ВЫСОТА\" - Челябинск - ИНН 7453330144 - Гендиректор Каземиров Д. А.",
+                                                                                                     "extracted_from":  "title/meta_description/html",
+                                                                                                     "assets":  "",
+                                                                                                     "tax_debt":  "23 тыс. руб.",
+                                                                                                     "procurements":  {
+                                                                                                                          "count":  "",
+                                                                                                                          "url":  "https://checko.ru/company/smk-vysota-1197456033345/procurements"
+                                                                                                                      },
+                                                                                                     "ogrn":  "1197456033345",
+                                                                                                     "revenue":  "1,5 млрд руб.",
+                                                                                                     "revenue_change_percent":  "39",
+                                                                                                     "director_other_companies_count":  "5",
+                                                                                                     "bank_accounts_blocking":  "possible_mentions_in_static_html",
+                                                                                                     "registration_date_text":  "2 августа 2019",
+                                                                                                     "director":  "Каземиров Дмитрий Андреевич",
+                                                                                                     "financial_ratios_2025":  {
+                                                                                                                                   "kfn":  "0.55",
+                                                                                                                                   "kos":  "0.40",
+                                                                                                                                   "dnv":  "0.21"
+                                                                                                                               },
+                                                                                                     "fedresurs":  {
+                                                                                                                       "published_messages":  "1 сообщение",
+                                                                                                                       "mentions":  "38 сообщений"
+                                                                                                                   },
+                                                                                                     "insurance_paid":  "93,5 млн руб.",
+                                                                                                     "name":  "ООО СМК \"ВЫСОТА\"",
+                                                                                                     "arbitration":  {
+                                                                                                                         "total_cases":  "1 судебное дело",
+                                                                                                                         "plaintiff_cases":  "1",
+                                                                                                                         "plaintiff_claim_amount":  "28,1 тыс. руб.",
+                                                                                                                         "defendant_cases":  "0",
+                                                                                                                         "defendant_claim_amount":  ""
+                                                                                                                     },
+                                                                                                     "market_age_text":  "",
+                                                                                                     "timeline_events":  [
+                                                                                                                             {
+                                                                                                                                 "date":  "17.01.2024",
+                                                                                                                                 "text":  "17.01.2024 КПП изменен с 745101001 на 744701001"
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "date":  "17.01.2024",
+                                                                                                                                 "text":  "17.01.2024 Юридический адрес изменен с 454090, Челябинская область, г. о. Челябинский, вн. р-н Советский, г. Челябинск, пр-кт Ленина, д. 21В, помещ. 176, офис 310 на 454084, Челябинская область, г. о. Челябинский, вн. р-н Калининский, г. Челябинск, ул. Набережная, д. 9, помещ. 2"
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "date":  "16.01.2024",
+                                                                                                                                 "text":  "16.01.2024 Регистрация в Социальном фонде России, присвоен номер 1082991827"
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "date":  "03.11.2023",
+                                                                                                                                 "text":  "03.11.2023 Каземирова Татьяна Викторовна больше не является генеральным директором организации Каземиров Дмитрий Андреевич становится генеральным директором организации"
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "date":  "25.09.2023",
+                                                                                                                                 "text":  "25.09.2023 Из ЕГРЮЛ удалена запись об учредителе Каземирова Татьяна Викторовна Каземиров Дмитрий Андреевич становится новым учредителем (участником) организации"
+                                                                                                                             }
+                                                                                                                         ],
+                                                                                                     "normalized_search_name":  "ООО СМК ВЫСОТА",
+                                                                                                     "director_person_url":  "https://checko.ru/person/744714969770",
+                                                                                                     "staff_count":  "336 people",
+                                                                                                     "average_monthly_salary":  "123,2 тыс. руб."
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Use Checko as aggregator; confirm critical data against primary registries before final status.",
+                                                                                                        "Review finance, arbitration, debts, inspections, related companies and contacts on the collected URL."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "dreamjob_reviews",
+                                                                                   "title":  "DreamJob employee reviews",
+                                                                                   "status":  "ok",
+                                                                                   "url":  "https://dreamjob.ru/employers/1521562",
+                                                                                   "collected":  {
+                                                                                                     "description":  "Изучайте отзывы сотрудников о работе в компании СМК Высота. Будьте в курсе условий труда, зарплат, карьерных возможностей благодаря сервису Dream Job",
+                                                                                                     "matched_by":  "company_name_search",
+                                                                                                     "sample_reviews":  [
+                                                                                                                            {
+                                                                                                                                "date":  "2025-09-30T13:37:56+03:00",
+                                                                                                                                "author":  "Отзыв сотрудника",
+                                                                                                                                "text":  "📌 В компании серьёзные проблемы в управлении, руководители не обладают необходимыми знаниями и навыками. Много неэффективно процессов, работа не упрощается, а усложняется. В коллективе присутствует нездоровая рабочая атмосфера, большая текучесть персонала. От работников часто ожидают выполнения задач вне рабочего графика, включая выходные дни. Профессиональные качества и компетенции сотрудников руководством не ценятся. Умение поддерживать внутренние интриги приветствуется, и те, кто участвует в подковерных играх, получают лояльность от руководства и необоснованное завышение зарплаты. Неудобных сотрудников удаляют из коллектива, создавая невыносимые условия работы. Если вы амбициозны, активны и хотите развиваться в своей профессии, то НЕ рекомендую данную компанию для трудоустройства",
+                                                                                                                                "upvote_count":  21,
+                                                                                                                                "url":  "https://dreamjob.ru/employers/1521562?review_id=4073527"
+                                                                                                                            }
+                                                                                                                        ],
+                                                                                                     "review_count_text":  "12 отзывов",
+                                                                                                     "rating_class":  "45",
+                                                                                                     "title":  "Работа в СМК Высота ᐈ Отзывы сотрудников о работодателе СМК Высота, зарплаты",
+                                                                                                     "search_attempts":  [
+                                                                                                                             {
+                                                                                                                                 "count":  0,
+                                                                                                                                 "query":  "ООО СМК \"ВЫСОТА\""
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "count":  0,
+                                                                                                                                 "query":  "ООО СМК ВЫСОТА"
+                                                                                                                             },
+                                                                                                                             {
+                                                                                                                                 "count":  15,
+                                                                                                                                 "query":  "ВЫСОТА"
+                                                                                                                             }
+                                                                                                                         ],
+                                                                                                     "employer_name":  "СМК Высота",
+                                                                                                     "review_count":  12,
+                                                                                                     "employer_id":  "1521562"
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Read full DreamJob page and classify review themes: payment, management, projects, housing, travel, PPE, contract.",
+                                                                                                        "Do not treat one review as proof; look for repeated patterns and dates."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "yandex_maps_reviews",
+                                                                                   "title":  "Yandex Maps reviews",
+                                                                                   "status":  "ok",
+                                                                                   "url":  "https://yandex.ru/maps/?text=7453330144",
+                                                                                   "collected":  {
+                                                                                                     "found_by_inn_in_static_html":  true,
+                                                                                                     "searched_company_name":  "ООО СМК \"ВЫСОТА\"",
+                                                                                                     "found_by_name_in_static_html":  false,
+                                                                                                     "searched_inn":  "7453330144",
+                                                                                                     "page_title":  "Yandex Maps: search for places, transport, and routes",
+                                                                                                     "collection_mode":  "static_html_probe"
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Static HTML probe completed. If not_found, this source needs browser-rendered collection or search by branch address/name.",
+                                                                                                        "Reviews on map services are loaded dynamically; browser collector is the next no-API layer."
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "2gis_reviews",
+                                                                                   "title":  "2GIS reviews",
+                                                                                   "status":  "error",
+                                                                                   "url":  "https://2gis.ru/search/7453330144",
+                                                                                   "collected":  {
+                                                                                                     "searched_inn":  "7453330144",
+                                                                                                     "collection_mode":  "static_html_probe",
+                                                                                                     "searched_company_name":  "ООО СМК \"ВЫСОТА\""
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+                                                                                                  "The operation has timed out."
+                                                                                              ],
+                                                                                   "next_actions":  [
+
+                                                                                                    ]
+                                                                               },
+                                                                               {
+                                                                                   "code":  "pluszveno_internal",
+                                                                                   "title":  "PlusZveno internal history",
+                                                                                   "status":  "configured",
+                                                                                   "url":  ".\\company_check\\internal_cases.json",
+                                                                                   "collected":  {
+                                                                                                     "vacancy_contract_mismatches":  [
+
+                                                                                                                                     ],
+                                                                                                     "confirmed_projects":  [
+
+                                                                                                                            ],
+                                                                                                     "disputes":  [
+
+                                                                                                                  ],
+                                                                                                     "reviews":  [
+
+                                                                                                                 ]
+                                                                                                 },
+                                                                                   "signals":  [
+
+                                                                                               ],
+                                                                                   "errors":  [
+                                                                                                  "Internal history file does not exist yet."
+                                                                                              ],
+                                                                                   "next_actions":  [
+                                                                                                        "Connect real disputes, reviews and vacancy checks after the database is introduced."
+                                                                                                    ]
+                                                                               }
+                                                                           ],
+                                                               "representative_checklist":  [
+                                                                                                "Verify INN, OGRN, KPP and full legal name with FNS.",
+                                                                                                "Find an official contact channel on the company site, public registries, 2GIS or procurement documents.",
+                                                                                                "Send the confirmation code only to an official channel and save the sending fact.",
+                                                                                                "Verify vacancy terms: net rate, personal income tax, travel, PPE, daily allowance, housing, shift schedule, contract type.",
+                                                                                                "Request the labor contract and compare it with the declared vacancy terms.",
+                                                                                                "Verify the project: customer/plant, object, plant legal entity, project lead and implementation period.",
+                                                                                                "Check Checko.ru as an aggregator: finance, arbitration, debts, inspections, related companies and contacts.",
+                                                                                                "Check DreamJob, Yandex Maps and 2GIS reviews; separate customer reviews from worker and contractor reviews.",
+                                                                                                "Record manual checks for courts, Fedresurs, RNP, FSSP and SRO.",
+                                                                                                "Do not set confirmed status until critical signals are resolved."
+                                                                                            ]
+                                                           }
+                                     }
+                  }
+}

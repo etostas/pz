@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ПлюсЗвено - проверка вахтовых вакансий</title>
+    <meta name="description" content="Кликабельный прототип trust-сервиса для вахтовых строителей, компаний, бригад и заводов." />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#home" data-route="home" aria-label="ПлюсЗвено">
+        <img src="./assets/logo-transparent.png" alt="" />
+        <span>ПлюсЗвено</span>
+      </a>
+      <nav class="topnav" id="topNav" aria-label="Основная навигация">
+        <a href="#vacancies" data-route="vacancies">Вакансии</a>
+        <a href="#check-vacancy" data-route="check-vacancy">Проверить вакансию</a>
+        <a href="#auth" data-route="auth">Вход</a>
+      </nav>
+      <div class="session-actions" id="sessionActions"></div>
+    </header>
+
+    <main>
+      <section class="page active" data-page="home">
+        <div class="hero home-hero">
+          <div class="hero-copy hero-slider" id="heroSlider">
+            <article class="hero-slide active" data-slide="0">
+              <p class="eyebrow">Закрытый клуб профессионалов вахты</p>
+              <h1>Проверка строительных вахтовых вакансий</h1>
+              <p class="lead">Легкий и анонимный поиск работы, быстрый поиск проверенных сотрудников и честный прозрачный рейтинг для рынка промышленной вахты.</p>
+              <div class="hero-actions">
+                <button class="primary-btn" type="button" data-route="vacancies">Смотреть вакансии</button>
+                <button class="secondary-btn" type="button" data-route="check-vacancy">Проверить вакансию</button>
+              </div>
+            </article>
+            <article class="hero-slide" data-slide="1">
+              <p class="eyebrow">Проверка вахтовых вакансий</p>
+              <h1>Отправьте вакансию на проверку</h1>
+              <p class="lead">Укажите ИНН, ссылку на вакансию и телефон. После подтверждения номера представитель ПлюсЗвена проверит условия, контакты и договор.</p>
+              <div class="hero-actions">
+                <button class="primary-btn" type="button" data-route="check-vacancy">Отправить на проверку</button>
+              </div>
+            </article>
+            <article class="hero-slide" data-slide="2">
+              <p class="eyebrow">Рейтинг</p>
+              <h1>Репутация строится на подтвержденных действиях</h1>
+              <p class="lead">Документы, выполненные проекты, отзывы, споры и исправления влияют на доверие сотрудника, компании, бригады и заказчика.</p>
+              <div class="hero-actions">
+                <button class="primary-btn" type="button" data-route="rating">Правила рейтинга</button>
+              </div>
+            </article>
+            <div class="slider-dots" aria-label="Переключение баннеров">
+              <button class="active" type="button" data-hero-dot="0"></button>
+              <button type="button" data-hero-dot="1"></button>
+              <button type="button" data-hero-dot="2"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="check-vacancy">
+        <div class="check-layout">
+          <article class="panel-card">
+            <p class="eyebrow">Проверка вакансии</p>
+            <h1>Проверяем, можно ли доверять условиям</h1>
+            <p class="lead small-lead">Проверка нужна, чтобы сотрудник, бригада или заказчик понимали, кто разместил вакансию и совпадают ли обещания с фактами.</p>
+            <ul class="report-list">
+              <li>Компания, ИНН, официальный контакт и полномочия представителя.</li>
+              <li>Ставка на руки, НДФЛ, график, дорога, жилье, СИЗ и суточные.</li>
+              <li>Договор, объект, заказчик, сроки и условия выхода на площадку.</li>
+              <li>Риски по Checko, ФНС, судам, отзывам и открытым источникам.</li>
+            </ul>
+          </article>
+          <article class="panel-card vacancy-check-card">
+            <h2>Ссылка на вакансию</h2>
+            <label for="vacancyCheckLink">Вставьте ссылку</label>
+            <input id="vacancyCheckLink" inputmode="url" autocomplete="url" placeholder="https://..." />
+            <label for="vacancyCheckRole">Кто отправляет</label>
+            <select id="vacancyCheckRole">
+              <option value="worker">Сотрудник</option>
+              <option value="brigade">Бригада</option>
+              <option value="customer">Завод / заказчик</option>
+              <option value="company">Компания</option>
+            </select>
+            <button class="primary-btn full" type="button" id="vacancyCheckNext">Далее</button>
+            <div class="check-result" id="vacancyCheckResult" hidden></div>
+            <div class="phone-login" id="vacancyCheckPhoneStep" hidden>
+              <label for="checkPhone">Номер телефона</label>
+              <div class="inline-field">
+                <input id="checkPhone" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" />
+                <button class="primary-btn" type="button" id="checkPhoneNext">Код</button>
+              </div>
+              <p class="field-error" id="checkError"></p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page narrow auth-page" data-page="auth">
+        <article class="auth-card" aria-label="Вход и регистрация">
+          <p class="eyebrow">Вход</p>
+          <h1>Введите номер телефона</h1>
+          <p class="lead small-lead">По номеру открываем заявки на проверку, уведомления и профиль.</p>
+          <div class="phone-login" id="phoneLogin">
+            <label for="loginPhone">Номер телефона</label>
+            <div class="inline-field">
+              <input id="loginPhone" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" />
+              <button class="primary-btn" type="button" id="loginSend">Код</button>
+            </div>
+          </div>
+          <p class="field-error" id="loginError"></p>
+        </article>
+      </section>
+
+      <section class="page narrow" data-page="sms">
+        <article class="panel-card">
+          <p class="eyebrow">Подтверждение</p>
+          <h1>Введите код из SMS</h1>
+          <p class="lead small-lead">В прототипе подойдет любой четырехзначный код. После подтверждения откроется раздел уведомлений.</p>
+          <label for="smsCode">Код подтверждения</label>
+          <input id="smsCode" inputmode="numeric" maxlength="4" placeholder="0000" />
+          <button class="primary-btn full" type="button" id="smsConfirm">Подтвердить</button>
+          <p class="field-error" id="smsError"></p>
+        </article>
+      </section>
+
+      <section class="page" data-page="notifications">
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Ваши события</p>
+            <h1>Уведомления</h1>
+          </div>
+          <div class="account-chip"><span id="accountLabel">+7 900 000-00-00</span><b>рейтинг 1.0</b></div>
+        </div>
+        <article class="panel-card notice-lock" id="noticeLock">
+          <h2>Уведомления доступны после авторизации</h2>
+          <p class="muted">После подтверждения номера, а для компании после кода из письма на официальной почте, здесь появятся результаты проверок, приглашения и системные сообщения.</p>
+          <button class="primary-btn" type="button" data-route="home">Вернуться к входу</button>
+        </article>
+        <div class="notification-layout">
+          <section class="notice-feed" id="noticeFeed"></section>
+          <aside class="panel-card">
+            <h2>Настройки профиля</h2>
+            <p class="muted">Добавляйте данные только когда они открывают полезную функцию. Рядом с каждым документом объясняем, зачем он нужен и кто его увидит.</p>
+            <button class="primary-btn full" type="button" data-route="profile">Открыть профиль</button>
+            <button class="secondary-btn full" type="button" data-route="vacancies">К вакансиям</button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="page" data-page="profile">
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Профиль сотрудника</p>
+            <h1>Настройка и внешний вид профиля</h1>
+          </div>
+          <div class="action-row">
+            <button class="secondary-btn" type="button" data-route="notifications">В уведомления</button>
+            <button class="ghost-btn" type="button" id="profileLogout">Выйти</button>
+          </div>
+        </div>
+        <div class="profile-grid">
+          <article class="panel-card">
+            <h2>Как видит пользователь</h2>
+            <form class="profile-form">
+              <label>ФИО<input id="profileName" value="Петров Иван Олегович" /></label>
+              <label>Регион проживания<input value="Республика Башкортостан" /></label>
+              <label>Гражданство<input value="РФ" /></label>
+              <label>Готовность к вахте<select><option>Свободен сейчас</option><option>Готов рассмотреть</option><option>Занят</option></select></label>
+              <label>Основная специальность<select id="specialtySelect"></select></label>
+              <label>Разряд / уровень<input value="6 разряд" /></label>
+              <label>Опыт на ОПО, заводах и промышленных объектах<textarea>НПЗ, нефтехимия, трубопроводы. Работал на объектах с режимным допуском.</textarea></label>
+              <fieldset>
+                <legend>Каналы связи</legend>
+                <label class="checkline"><input type="checkbox" checked /> MAX</label>
+                <label class="checkline"><input type="checkbox" checked /> Telegram</label>
+                <label class="checkline"><input type="checkbox" /> Почта</label>
+                <label class="checkline"><input type="checkbox" /> Звонок</label>
+                <label class="checkline"><input type="checkbox" /> Другое</label>
+              </fieldset>
+            </form>
+          </article>
+
+          <article class="panel-card">
+            <h2>Документы и объяснения</h2>
+            <div class="doc-list">
+              <div class="doc-item">
+                <div><b>НАКС РД / НГДО</b><span>Нужен для допуска к сварочным работам и расчета совпадения с вакансией.</span></div>
+                <select><option>Показывать только статус</option><option>Передавать скан после согласия</option><option>Не показывать</option></select>
+              </div>
+              <div class="doc-item">
+                <div><b>Медосмотр</b><span>Проверяем, можно ли выходить на ОПО без задержки перед вахтой.</span></div>
+                <select><option>Показывать только статус</option><option>Передавать скан после согласия</option><option>Не показывать</option></select>
+              </div>
+              <div class="doc-item">
+                <div><b>Контрольный отвар</b><span>Если допуск действует на заводе до 5 лет, показываем статус новому подрядчику.</span></div>
+                <select><option>Показывать только статус</option><option>Передавать скан после согласия</option><option>Не показывать</option></select>
+              </div>
+            </div>
+            <div class="score-row">
+              <span>Старт регистрации: <b>1.0</b></span>
+              <span>Документы: <b>+1.0</b></span>
+              <span>Специализация: <b>+0.5</b></span>
+            </div>
+          </article>
+
+          <article class="panel-card company-preview">
+            <p class="eyebrow">Как видят компании</p>
+            <div class="worker-card">
+              <div class="avatar">ИП</div>
+              <div>
+                <h2>Иван П.</h2>
+                <p>Сварщик НАКС, 6 разряд</p>
+              </div>
+              <strong class="match">90%</strong>
+            </div>
+            <div class="tag-row">
+              <span>НАКС подтвержден</span>
+              <span>Медосмотр есть</span>
+              <span>Допуск НПЗ до 18.05.2029</span>
+              <span>Телефон скрыт</span>
+            </div>
+            <p class="muted">Полное ФИО, телефон и сканы документов не видны до отдельного согласия сотрудника.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" data-page="vacancies">
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Собранные вакансии</p>
+            <h1>Монтажники металлоконструкций</h1>
+          </div>
+          <button class="secondary-btn" type="button" data-route="home">На главную</button>
+        </div>
+        <article class="panel-card project-card">
+          <div>
+            <h2>Импорт из парсера</h2>
+            <p>Первичная информация собрана из Avito и агрегатора vpoiskerabot. Дальше представитель ПлюсЗвена уточняет условия, контакты, договор, СИЗ, дорогу и проживание.</p>
+          </div>
+          <div class="project-meta">
+            <span id="vacancyCount">0 вакансий</span>
+            <span>Avito</span>
+            <span>vpoiskerabot</span>
+            <span>статус: первичный импорт</span>
+          </div>
+        </article>
+        <form class="filters-bar" id="vacancyFilters">
+          <label>Поиск<input id="filterSearch" placeholder="Должность, компания, объект" /></label>
+          <label>Статус<select id="filterStatus"><option value="all">Все</option><option value="verified">Проверенные</option><option value="unverified">Не проверенные</option></select></label>
+          <label>Источник<select id="filterSource"><option value="all">Все источники</option><option value="Avito">Avito</option><option value="vpoiskerabot">vpoiskerabot</option><option value="Роструд">Роструд</option><option value="SuperJob">SuperJob</option></select></label>
+          <label>Регион<input id="filterRegion" placeholder="Москва, Череповец, Нерюнгри" /></label>
+          <label>Зарплата от<input id="filterSalary" inputmode="numeric" placeholder="100000" /></label>
+          <label>Сортировка<select id="filterSort"><option value="date">Сначала новые</option><option value="salary">Сначала высокая оплата</option><option value="trust">Сначала проверенные</option></select></label>
+          <label class="checkline filter-check"><input id="filterVakhta" type="checkbox" /> Только вахта</label>
+        </form>
+        <div class="vacancy-list" id="parsedVacancyList">
+          <article class="panel-card">
+            <p class="muted">Загружаем вакансии из результатов парсинга.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" data-page="vacancy">
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Карточка вакансии</p>
+            <h1 id="vacancyDetailTitle">Вакансия</h1>
+          </div>
+          <button class="secondary-btn" type="button" data-route="vacancies">Назад к проекту</button>
+        </div>
+        <div class="vacancy-detail">
+          <article class="panel-card">
+            <h2>Первичные данные</h2>
+            <div class="detail-grid" id="vacancyDetailGrid">
+              <div><span>Источник</span><b>не выбран</b></div>
+            </div>
+          </article>
+          <article class="panel-card">
+            <h2>Описание и проверка</h2>
+            <p id="vacancyDetailDescription">Выберите вакансию из списка.</p>
+            <div class="contract-summary">
+              <h3>Что уточняет представитель ПлюсЗвена</h3>
+              <p>Фактическую ставку, график, жилье, дорогу, СИЗ, НДФЛ, оформление, договор и полномочия контактного лица.</p>
+              <strong id="vacancyDetailStatus">Статус: первичная информация</strong>
+            </div>
+            <div class="action-row">
+              <button class="primary-btn" type="button" id="acceptVacancy">Проверить по номеру</button>
+              <a class="secondary-link" id="vacancySourceLink" href="#" target="_blank" rel="noopener">Открыть источник</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" data-page="rating">
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Правила рейтинга</p>
+            <h1>Честный и прозрачный рейтинг</h1>
+          </div>
+          <button class="secondary-btn" type="button" data-route="home">На главную</button>
+        </div>
+        <article class="panel-card rules-doc">
+          <h2>1. Назначение рейтинга</h2>
+          <p>Рейтинг показывает не “красивость анкеты”, а подтвержденную надежность участника рынка. Он нужен, чтобы сотрудник видел честность компании, компания видела проверенность специалиста, а спорные ситуации разбирались по фактам.</p>
+          <h2>2. Стартовая позиция</h2>
+          <p>Сотрудник получает стартовую позицию после подтверждения номера телефона. Компания получает стартовую позицию после подтверждения кода, отправленного на официальную почту из открытых источников. Бригада и завод проходят аналогичную проверку контакта и роли.</p>
+          <h2>3. Что повышает рейтинг</h2>
+          <ul>
+            <li>Подтверждение документов: НАКС, удостоверения, медосмотр, допуски, объектовая история.</li>
+            <li>Добавление специализации, разряда, опыта на ОПО, заводах и промышленных объектах.</li>
+            <li>Успешно выполненный проект без спора и без нарушения условий.</li>
+            <li>Подтвержденный отзыв о компании, где сотрудник действительно работал.</li>
+            <li>Погашение задолженности компанией и подтвержденное исправление нарушения.</li>
+            <li>Участие в совете диспута, если участник помогает разбирать спор по фактам, а не по личной выгоде.</li>
+          </ul>
+          <h2>4. Что снижает рейтинг сотрудника</h2>
+          <ul>
+            <li>Неявка на объект без предупреждения.</li>
+            <li>Плохая работа или подтвержденный брак по НТД.</li>
+            <li>Несоответствие заявленного разряда или недопуск к работам.</li>
+            <li>Грубое нарушение техники безопасности.</li>
+            <li>Подлог документов или манипуляция рейтингом.</li>
+          </ul>
+          <h2>5. Что снижает рейтинг компании</h2>
+          <ul>
+            <li>Задержка или невыплата оплаты.</li>
+            <li>Расхождение вакансии, договора и фактических условий.</li>
+            <li>Необоснованное обвинение сотрудника в браке или нарушении ТБ.</li>
+            <li>Системные простои, срыв организации работ, недостоверные условия проживания, СИЗ или дороги.</li>
+            <li>Месть отзывом после проигранного спора или манипуляция рейтингом.</li>
+          </ul>
+          <h2>6. Метки и исправление</h2>
+          <p>Метки не являются пожизненной блокировкой. Легкие метки снимаются после серии успешных контрактов без повторения нарушения. Тяжелые нарушения требуют активной реабилитации: повторной верификации документов, аттестации, рекомендаций, закрытия долгов или подтверждения исправленных процессов.</p>
+          <h2>7. Споры</h2>
+          <p>Платформа не является казначеем и не удерживает деньги. Споры разбираются по документам, переписке, договору, актам, НТД, фото, видео и подтверждениям сторон. Если компания не отвечает в установленный срок, спор может быть решен на основании данных заявителя.</p>
+          <h2>8. Прозрачность</h2>
+          <p>История нарушений, исправлений и спорных решений хранится в профиле. Для публичного просмотра используется обезличенный формат, чтобы защищать персональные данные и одновременно сохранять доверие к рынку.</p>
+        </article>
+      </section>
+      <section class="page" data-page="admin">
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Интерфейс администратора</p>
+            <h1>Управление</h1>
+          </div>
+          <button class="secondary-btn" type="button" data-route="vacancies">К вакансиям</button>
+        </div>
+        <div class="parser-grid">
+          <article class="panel-card parser-preview company-check-admin">
+            <div class="admin-section-head">
+              <div>
+                <p class="eyebrow">Проверка компании</p>
+                <h2>Автоматический отчет по ИНН</h2>
+              </div>
+              <span class="status-pill">ИА</span>
+            </div>
+            <div class="company-check-controls">
+              <label for="adminCompanyInn">ИНН / ОГРН / ОГРНИП</label>
+              <div class="inline-field">
+                <input id="adminCompanyInn" inputmode="numeric" placeholder="7453330144" />
+                <button class="primary-btn" type="button" id="runCompanyCheck">Собрать отчет</button>
+              </div>
+              <p class="muted-note" id="companyCheckHint">Сбор запускается локальным сервером админки. Источники без API проверяются через HTML-страницы и открытые endpoint сайтов.</p>
+              <div class="check-progress" id="companyCheckProgress" hidden></div>
+            </div>
+            <div class="company-report-empty" id="companyReportEmpty">
+              Введите ИНН, ОГРН или ОГРНИП и запустите сбор, чтобы увидеть юридические данные, финансы, персонал, источники и отзывы.
+            </div>
+            <div class="manual-review-panel" id="manualReviewPanel" hidden>
+              <div class="admin-section-head">
+                <div>
+                  <p class="eyebrow">Ручной этап</p>
+                  <h2>Добавить отзывы после первичной проверки</h2>
+                </div>
+              </div>
+              <div class="manual-review-sources" id="manualReviewSources"></div>
+            </div>
+            <div class="company-report" id="companyReportView" hidden></div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <a href="#agreement">Пользовательское соглашение</a>
+      <a href="#personal">Персональные данные</a>
+      <a href="#cookies">Cookies</a>
+      <a href="#rating" data-route="rating">Правила рейтинга</a>
+      <a href="#contacts">Контакты поддержки</a>
+    </footer>
+
+    <div class="cookie" id="cookieBanner">
+      <span>Мы используем cookies для работы прототипа и сохранения выбора разделов.</span>
+      <button class="secondary-btn" type="button" id="cookieAccept">Принять</button>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./script.js"></script>
+  </body>
+</html>

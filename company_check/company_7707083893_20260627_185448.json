@@ -1,0 +1,246 @@
+﻿{
+    "inn":  "7707083893",
+    "generated_at":  "2026-06-27T13:54:48Z",
+    "platform_status":  "signals_found",
+    "risk_score":  35,
+    "summary":  [
+                    "FNS legal card was not collected automatically.",
+                    "Manual source checks required: 7.",
+                    "FNS EGRUL/EGRIP: automatic collection failed."
+                ],
+    "legal_card":  {
+
+                   },
+    "confirmation_channels":  [
+                                  {
+                                      "source":  "contacts_public",
+                                      "value":  "Official email or phone is not confirmed automatically",
+                                      "type":  "manual_required"
+                                  }
+                              ],
+    "sources":  [
+                    {
+                        "code":  "fns_egrul",
+                        "title":  "FNS EGRUL/EGRIP",
+                        "status":  "error",
+                        "url":  "https://egrul.nalog.ru/",
+                        "collected":  {
+
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+                                       "Удаленный сервер возвратил ошибку: (404) Не найден."
+                                   ],
+                        "next_actions":  [
+                                             "Verify legal name, status, OGRN, KPP, address and director.",
+                                             "If automatic FNS collection fails, attach an EGRUL extract manually."
+                                         ]
+                    },
+                    {
+                        "code":  "bo_nalog",
+                        "title":  "FNS accounting reports",
+                        "status":  "manual_review",
+                        "url":  "https://bo.nalog.ru/search?query=7707083893",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "revenue",
+                                                                 "profit_or_loss",
+                                                                 "assets",
+                                                                 "reporting_dynamics"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "fedresurs",
+                        "title":  "Fedresurs bankruptcy and material facts",
+                        "status":  "manual_review",
+                        "url":  "https://fedresurs.ru/search/entity?searchString=7707083893",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "bankruptcy_messages",
+                                                                 "liquidation_or_reorganization",
+                                                                 "material_facts",
+                                                                 "pledges_or_notices"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "kad_arbitr",
+                        "title":  "Arbitration cases",
+                        "status":  "manual_review",
+                        "url":  "https://kad.arbitr.ru/",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "defendant_cases",
+                                                                 "payment_and_contract_disputes",
+                                                                 "case_frequency",
+                                                                 "claim_amounts"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "zakupki_rnp",
+                        "title":  "Government procurement bad-faith supplier registry",
+                        "status":  "manual_review",
+                        "url":  "https://zakupki.gov.ru/epz/dishonestsupplier/search/results.html?searchString=7707083893",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "rnp_presence",
+                                                                 "inclusion_reason",
+                                                                 "registry_period"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "fssp",
+                        "title":  "FSSP enforcement proceedings",
+                        "status":  "manual_review",
+                        "url":  "https://fssp.gov.ru/iss/ip/",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "active_enforcement_proceedings",
+                                                                 "debt_amounts",
+                                                                 "debt_type"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "sro",
+                        "title":  "NOSTROY/NOPRIZ SRO membership",
+                        "status":  "manual_review",
+                        "url":  "https://reestr.nostroy.ru/",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "sro_membership",
+                                                                 "responsibility_level",
+                                                                 "suspensions_or_exclusions"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "contacts_public",
+                        "title":  "Official company contacts",
+                        "status":  "manual_review",
+                        "url":  "https://www.google.com/search?q=7707083893%20official%20site%20email%20phone",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "official_site",
+                                                                 "official_email",
+                                                                 "official_phone",
+                                                                 "vacancy_contact_match"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "pluszveno_internal",
+                        "title":  "PlusZveno internal history",
+                        "status":  "configured",
+                        "url":  ".\\company_check\\internal_cases.json",
+                        "collected":  {
+                                          "vacancy_contract_mismatches":  [
+
+                                                                          ],
+                                          "confirmed_projects":  [
+
+                                                                 ],
+                                          "disputes":  [
+
+                                                       ],
+                                          "reviews":  [
+
+                                                      ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+                                       "Internal history file does not exist yet."
+                                   ],
+                        "next_actions":  [
+                                             "Connect real disputes, reviews and vacancy checks after the database is introduced."
+                                         ]
+                    }
+                ],
+    "representative_checklist":  [
+                                     "Verify INN, OGRN, KPP and full legal name with FNS.",
+                                     "Find an official contact channel on the company site, public registries, 2GIS or procurement documents.",
+                                     "Send the confirmation code only to an official channel and save the sending fact.",
+                                     "Verify vacancy terms: net rate, personal income tax, travel, PPE, daily allowance, housing, shift schedule, contract type.",
+                                     "Request the labor contract and compare it with the declared vacancy terms.",
+                                     "Verify the project: customer/plant, object, plant legal entity, project lead and implementation period.",
+                                     "Record manual checks for courts, Fedresurs, RNP, FSSP and SRO.",
+                                     "Do not set confirmed status until critical signals are resolved."
+                                 ]
+}

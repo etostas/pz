@@ -1,0 +1,355 @@
+﻿{
+    "inn":  "6671418164",
+    "generated_at":  "2026-06-27T15:58:46Z",
+    "platform_status":  "open_data",
+    "risk_score":  25,
+    "summary":  [
+                    "FNS legal card was not collected automatically.",
+                    "Manual source checks required: 10."
+                ],
+    "legal_card":  {
+
+                   },
+    "confirmation_channels":  [
+                                  {
+                                      "source":  "contacts_public",
+                                      "value":  "Official email or phone is not confirmed automatically",
+                                      "type":  "manual_required"
+                                  }
+                              ],
+    "sources":  [
+                    {
+                        "code":  "fns_egrul",
+                        "title":  "FNS EGRUL/EGRIP",
+                        "status":  "manual_review",
+                        "url":  "https://egrul.nalog.ru/",
+                        "collected":  {
+
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+                                       "Удаленный сервер возвратил ошибку: (404) Не найден."
+                                   ],
+                        "next_actions":  [
+                                             "Verify legal name, status, OGRN, KPP, address and director.",
+                                             "If automatic FNS collection fails, attach an EGRUL extract manually.",
+                                             "Automatic FNS endpoint failed; open egrul.nalog.ru and attach the extract manually."
+                                         ]
+                    },
+                    {
+                        "code":  "bo_nalog",
+                        "title":  "FNS accounting reports",
+                        "status":  "manual_review",
+                        "url":  "https://bo.nalog.ru/search?query=6671418164",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "revenue",
+                                                                 "profit_or_loss",
+                                                                 "assets",
+                                                                 "reporting_dynamics"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "fedresurs",
+                        "title":  "Fedresurs bankruptcy and material facts",
+                        "status":  "manual_review",
+                        "url":  "https://fedresurs.ru/search/entity?searchString=6671418164",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "bankruptcy_messages",
+                                                                 "liquidation_or_reorganization",
+                                                                 "material_facts",
+                                                                 "pledges_or_notices"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "kad_arbitr",
+                        "title":  "Arbitration cases",
+                        "status":  "manual_review",
+                        "url":  "https://kad.arbitr.ru/",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "defendant_cases",
+                                                                 "payment_and_contract_disputes",
+                                                                 "case_frequency",
+                                                                 "claim_amounts"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "zakupki_rnp",
+                        "title":  "Government procurement bad-faith supplier registry",
+                        "status":  "manual_review",
+                        "url":  "https://zakupki.gov.ru/epz/dishonestsupplier/search/results.html?searchString=6671418164",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "rnp_presence",
+                                                                 "inclusion_reason",
+                                                                 "registry_period"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "fssp",
+                        "title":  "FSSP enforcement proceedings",
+                        "status":  "manual_review",
+                        "url":  "https://fssp.gov.ru/iss/ip/",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "active_enforcement_proceedings",
+                                                                 "debt_amounts",
+                                                                 "debt_type"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "sro",
+                        "title":  "NOSTROY/NOPRIZ SRO membership",
+                        "status":  "manual_review",
+                        "url":  "https://reestr.nostroy.ru/",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "sro_membership",
+                                                                 "responsibility_level",
+                                                                 "suspensions_or_exclusions"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "contacts_public",
+                        "title":  "Official company contacts",
+                        "status":  "manual_review",
+                        "url":  "https://www.google.com/search?q=6671418164%20official%20site%20email%20phone",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "official_site",
+                                                                 "official_email",
+                                                                 "official_phone",
+                                                                 "vacancy_contact_match"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "checko_company_card",
+                        "title":  "Checko.ru company card",
+                        "status":  "ok",
+                        "url":  "https://checko.ru/company/smu-2-1136671007660",
+                        "collected":  {
+                                          "description":  "ООО \"СМУ-2\" - г. Екатеринбург - ИНН 6671418164 - ОГРН 1136671007660 - Генеральный директор Кузнецов Александр Евгеньевич - Реквизиты - Контакты - Учредители - Бухгалтерская отчетность - Исполнительные производства - Проверки - Вакансии",
+                                          "normalized_search_name":  "ООО СМУ 2",
+                                          "inn":  "6671418164",
+                                          "name":  "ООО \"СМУ-2\"",
+                                          "ogrn":  "1136671007660",
+                                          "title":  "ООО \"СМУ-2\" - Екатеринбург - ИНН 6671418164 - Гендиректор Кузнецов А. Е.",
+                                          "director":  "",
+                                          "extracted_from":  "title/meta_description/html",
+                                          "company_url":  "https://checko.ru/company/smu-2-1136671007660"
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Use Checko as aggregator; confirm critical data against primary registries before final status.",
+                                             "Review finance, arbitration, debts, inspections, related companies and contacts on the collected URL."
+                                         ]
+                    },
+                    {
+                        "code":  "dreamjob_reviews",
+                        "title":  "DreamJob employee reviews",
+                        "status":  "not_found",
+                        "url":  "https://dreamjob.ru/search",
+                        "collected":  {
+                                          "company_name":  "ООО \"СМУ-2\"",
+                                          "search_attempts":  [
+                                                                  {
+                                                                      "count":  0,
+                                                                      "query":  "ООО \"СМУ-2\""
+                                                                  },
+                                                                  {
+                                                                      "count":  0,
+                                                                      "query":  "ООО СМУ 2"
+                                                                  }
+                                                              ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "No DreamJob employer card was found by generated company-name queries.",
+                                             "Try shortened brand/project names or add a direct DreamJob URL to the company card."
+                                         ]
+                    },
+                    {
+                        "code":  "yandex_maps_reviews",
+                        "title":  "Yandex Maps reviews",
+                        "status":  "manual_review",
+                        "url":  "https://yandex.ru/maps/?text=6671418164",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "company_cards_by_inn_name_address",
+                                                                 "rating",
+                                                                 "review_count",
+                                                                 "fresh_negative_reviews",
+                                                                 "worker_or_contractor_complaints",
+                                                                 "address_match"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "2gis_reviews",
+                        "title":  "2GIS reviews",
+                        "status":  "manual_review",
+                        "url":  "https://2gis.ru/search/6671418164",
+                        "collected":  {
+                                          "planned_fields":  [
+                                                                 "company_cards_by_inn_name_address",
+                                                                 "rating",
+                                                                 "review_count",
+                                                                 "fresh_negative_reviews",
+                                                                 "worker_or_contractor_complaints",
+                                                                 "address_match"
+                                                             ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+
+                                   ],
+                        "next_actions":  [
+                                             "Open the source and save the check result in the company card.",
+                                             "Replace this manual source with an automatic adapter when a stable API/feed is available."
+                                         ]
+                    },
+                    {
+                        "code":  "pluszveno_internal",
+                        "title":  "PlusZveno internal history",
+                        "status":  "configured",
+                        "url":  ".\\company_check\\internal_cases.json",
+                        "collected":  {
+                                          "vacancy_contract_mismatches":  [
+
+                                                                          ],
+                                          "confirmed_projects":  [
+
+                                                                 ],
+                                          "disputes":  [
+
+                                                       ],
+                                          "reviews":  [
+
+                                                      ]
+                                      },
+                        "signals":  [
+
+                                    ],
+                        "errors":  [
+                                       "Internal history file does not exist yet."
+                                   ],
+                        "next_actions":  [
+                                             "Connect real disputes, reviews and vacancy checks after the database is introduced."
+                                         ]
+                    }
+                ],
+    "representative_checklist":  [
+                                     "Verify INN, OGRN, KPP and full legal name with FNS.",
+                                     "Find an official contact channel on the company site, public registries, 2GIS or procurement documents.",
+                                     "Send the confirmation code only to an official channel and save the sending fact.",
+                                     "Verify vacancy terms: net rate, personal income tax, travel, PPE, daily allowance, housing, shift schedule, contract type.",
+                                     "Request the labor contract and compare it with the declared vacancy terms.",
+                                     "Verify the project: customer/plant, object, plant legal entity, project lead and implementation period.",
+                                     "Check Checko.ru as an aggregator: finance, arbitration, debts, inspections, related companies and contacts.",
+                                     "Check DreamJob, Yandex Maps and 2GIS reviews; separate customer reviews from worker and contractor reviews.",
+                                     "Record manual checks for courts, Fedresurs, RNP, FSSP and SRO."
+                                 ]
+}
