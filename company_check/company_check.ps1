@@ -8,13 +8,37 @@
 
   [string]$DgisApiKey = "",
 
+  [string]$SearchQuery = "",
+
   [switch]$JsonOnly,
 
-  [switch]$NoSave
+  [switch]$NoSave,
+
+  [switch]$QuickOnly
 )
 
 $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$SourceTimings = [System.Collections.ArrayList]::new()
+
+function Add-TimedSource {
+  param(
+    [System.Collections.ArrayList]$Target,
+    [string]$Name,
+    [scriptblock]$Block
+  )
+  $startedAt = Get-Date
+  Write-Verbose "Start source: $Name"
+  try {
+    $result = & $Block
+    if ($null -ne $result) { [void]$Target.Add($result) }
+  }
+  finally {
+    $elapsed = [int]((Get-Date) - $startedAt).TotalSeconds
+    [void]$script:SourceTimings.Add([ordered]@{ source = $Name; seconds = $elapsed })
+    Write-Verbose "Finish source: $Name, ${elapsed}s"
+  }
+}
 
 if ([string]::IsNullOrWhiteSpace($CheckoApiKey)) {
   foreach ($target in @("Process", "User", "Machine")) {
@@ -369,14 +393,35 @@ function Get-CheckoEnforcementText {
   return $text -replace "^Исполнительные производства\s*", ""
 }
 
+function Get-CheckoSuccessorText {
+  param([string]$PlainText, [string]$CurrentInn = "")
+  if (-not $PlainText) { return "" }
+  $patterns = @(
+    'правопреемник(?:ом)?\s*[:\-]?\s*(ООО\s+"[^"]+"(?:\s*"[^"]+")?|АО\s+"[^"]+"|ПАО\s+"[^"]+"|ЗАО\s+"[^"]+"|ОБЩЕСТВО\s+С\s+ОГРАНИЧЕННОЙ\s+ОТВЕТСТВЕННОСТЬЮ\s+"[^"]+")',
+    'правопреемник(?:ом)?[^А-ЯЁ]{0,80}([А-ЯЁA-Z]{2,}\s+"[^"]+"(?:\s*"[^"]+")?)',
+    'приемник(?:ом)?\s*[:\-]?\s*(ООО\s+"[^"]+"(?:\s*"[^"]+")?)'
+  )
+  foreach ($pattern in $patterns) {
+    $match = [regex]::Match($PlainText, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    if ($match.Success) {
+      $name = (ConvertFrom-HtmlText $match.Groups[1].Value).Trim()
+      $tailLength = [Math]::Min(220, $PlainText.Length - $match.Index)
+      $tail = if ($tailLength -gt 0) { $PlainText.Substring($match.Index, $tailLength) } else { "" }
+      $innMatch = [regex]::Match($tail, 'ИНН\s*([0-9]{10,12})', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+      if ($innMatch.Success -and $name -notmatch 'ИНН' -and $innMatch.Groups[1].Value -ne $CurrentInn) { return "$name (ИНН $($innMatch.Groups[1].Value))" }
+      return $name
+    }
+  }
+  return ""
+}
+
 function Format-RelatedCompaniesList {
   param($RelatedCompanies)
   if (-not $RelatedCompanies -or -not $RelatedCompanies.all_companies) { return "" }
   $items = @()
-  foreach ($company in @($RelatedCompanies.all_companies | Where-Object { -not $_.is_current_company -and $_.is_active -and $_.is_construction_smr } | Select-Object -First 20)) {
+  foreach ($company in @($RelatedCompanies.all_companies | Where-Object { -not $_.is_current_company -and $_.is_construction_smr } | Select-Object -First 20)) {
     $label = ConvertFrom-HtmlText $company.name
     if ($company.inn) { $label = "$label (ИНН $($company.inn))" }
-    if ($company.okved_code) { $label = "$label, ОКВЭД $($company.okved_code)" }
     if ($label) { $items += $label }
   }
   if ($items.Count -eq 0 -and @($RelatedCompanies.all_companies).Count -gt 0) {
@@ -684,8 +729,64 @@ function Normalize-CompanyQuery {
   return $value.Trim()
 }
 
+function Select-UniqueTextPreserveOrder {
+  param([array]$Values)
+  $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+  $result = New-Object System.Collections.Generic.List[string]
+  foreach ($value in @($Values)) {
+    $text = "$value"
+    if (-not $text) { continue }
+    if ($seen.Add($text)) { $result.Add($text) }
+  }
+  return @($result)
+}
+
 function Get-CompanyLegalStopWords {
-  return @("ooo", "ооо", "zao", "зао", "pao", "пао", "ao", "ао", "ip", "ип")
+  return @(
+    "ooo", "ооо", "zao", "зао", "pao", "пао", "ao", "ао", "nao", "нао", "ip", "ип",
+    "общество", "ограниченной", "ответственностью", "акционерное", "непубличное",
+    "публичное", "закрытое", "индивидуальный", "предприниматель", "компания"
+  )
+}
+
+function Get-CompanyQuotedNames {
+  param([string]$CompanyName)
+  $result = New-Object System.Collections.Generic.List[string]
+  if (-not $CompanyName) { return $result }
+  $matches = [regex]::Matches($CompanyName, '["«]([^"»]+)["»]?')
+  foreach ($match in $matches) {
+    $value = Normalize-CompanyQuery $match.Groups[1].Value
+    if ($value -and -not $result.Contains($value)) { $result.Add($value) }
+  }
+  return $result
+}
+
+function Remove-CompanyLegalForm {
+  param([string]$CompanyName)
+  $clean = Normalize-CompanyQuery $CompanyName
+  if (-not $clean) { return "" }
+  $quoted = @(Get-CompanyQuotedNames $CompanyName)
+  if ($quoted.Count -gt 0) { return $quoted[0] }
+  $patterns = @(
+    '^(?:непубличное\s+акционерное\s+общество|публичное\s+акционерное\s+общество|закрытое\s+акционерное\s+общество|акционерное\s+общество)\s+',
+    '^(?:общество\s+с\s+ограниченной\s+ответственностью)\s+',
+    '^(?:индивидуальный\s+предприниматель)\s+',
+    '^(?:ооо|ао|пао|зао|нао|ип)\s+'
+  )
+  foreach ($pattern in $patterns) {
+    $clean = [regex]::Replace($clean, $pattern, "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+  }
+  $words = @($clean -split "\s+" | Where-Object {
+    $_.Length -ge 2 -and $_.ToLowerInvariant() -notin (Get-CompanyLegalStopWords)
+  })
+  return (($words -join " ") -replace "\s+", " ").Trim()
+}
+
+function Test-ShortLegalCompanyName {
+  param([string]$CompanyName)
+  $clean = Normalize-CompanyQuery $CompanyName
+  if (-not $clean) { return $false }
+  return $clean -match '^(ооо|ао|пао|зао|нао|ип)\s+' -or $clean -match '^(ooo|ao|pao|zao|nao|ip)\s+'
 }
 
 function Get-GenericCompanyAbbreviationWords {
@@ -701,20 +802,110 @@ function Get-CompanyAbbreviationExpansions {
   }
 }
 
+$script:RussianCityNames = $null
+
+function Get-RussianCityNames {
+  if ($null -ne $script:RussianCityNames) { return $script:RussianCityNames }
+  $script:RussianCityNames = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+  $fallback = @("Уфа", "Челябинск", "Москва", "Санкт-Петербург", "Екатеринбург", "Новосибирск", "Казань", "Нижний Новгород", "Краснодар", "Пермь", "Тюмень")
+  foreach ($city in $fallback) { [void]$script:RussianCityNames.Add((Normalize-CompanyQuery $city).ToLowerInvariant()) }
+  $citiesPath = Join-Path (Split-Path -Parent $PSScriptRoot) "data\russian_cities.json"
+  if (Test-Path $citiesPath -PathType Leaf) {
+    try {
+      $cities = Get-Content $citiesPath -Raw -Encoding UTF8 | ConvertFrom-Json
+      foreach ($city in @($cities)) {
+        if ($city.name) { [void]$script:RussianCityNames.Add((Normalize-CompanyQuery $city.name).ToLowerInvariant()) }
+      }
+    }
+    catch {}
+  }
+  return $script:RussianCityNames
+}
+
+function Normalize-CityName {
+  param([string]$Value)
+  $clean = Normalize-CompanyQuery $Value
+  if (-not $clean) { return "" }
+  $clean = $clean -replace '^(о|округ|город|городской|муниципальный)\s+', ''
+  $clean = $clean -replace '^город\s+', ''
+  $clean = ($clean -replace "\s+", " ").Trim()
+  $cities = Get-RussianCityNames
+  $lower = $clean.ToLowerInvariant()
+  if ($cities.Contains($lower)) { return (Get-Culture).TextInfo.ToTitleCase($lower) }
+  $tokens = @($clean -split "\s+" | Where-Object { $_ })
+  for ($i = 0; $i -lt $tokens.Count; $i++) {
+    for ($len = [Math]::Min(3, $tokens.Count - $i); $len -ge 1; $len--) {
+      $candidate = (($tokens | Select-Object -Skip $i -First $len) -join " ").ToLowerInvariant()
+      if ($cities.Contains($candidate)) { return (Get-Culture).TextInfo.ToTitleCase($candidate) }
+    }
+  }
+  return $clean
+}
+
 function Get-MeaningfulCompanyWords {
   param([string]$CompanyName)
-  $stop = (Get-CompanyLegalStopWords) + (Get-GenericCompanyAbbreviationWords)
-  return (Normalize-CompanyQuery $CompanyName) -split "\s+" | Where-Object {
-    $_.Length -ge 2 -and $_.ToLowerInvariant() -notin $stop
+  $legalStop = Get-CompanyLegalStopWords
+  $genericStop = Get-GenericCompanyAbbreviationWords
+  $words = @((Normalize-CompanyQuery $CompanyName) -split "\s+" | Where-Object {
+    $_.Length -ge 2 -and $_.ToLowerInvariant() -notin $legalStop
+  })
+  $hasNonGeneric = @($words | Where-Object { $_.ToLowerInvariant() -notin $genericStop }).Count -gt 0
+  return $words | Where-Object {
+    $lower = $_.ToLowerInvariant()
+    $lower -notin $genericStop -or $hasNonGeneric
   }
 }
 
 function Get-CityFromAddress {
   param([string]$Address)
   if (-not $Address) { return "" }
-  $match = [regex]::Match($Address, '(?:г\.|город)\s*([А-Яа-яЁёA-Za-z\-\s]+?)(?:,|$)')
-  if ($match.Success) { return ($match.Groups[1].Value -replace "\s+", " ").Trim() }
+  $cityMatches = [regex]::Matches($Address, '(?:^|,\s*)(?:г\.|г\s+|город\s+)\s*(?!о\.)([А-Яа-яЁёA-Za-z\-\s]+?)(?:,|$)')
+  foreach ($matchItem in $cityMatches) {
+    $city = Normalize-CityName $matchItem.Groups[1].Value
+    if ($city -and (Get-RussianCityNames).Contains((Normalize-CompanyQuery $city).ToLowerInvariant())) { return $city }
+  }
+  $districtMatch = [regex]::Match($Address, 'г\.\s*о\.\s*(?:город\s*)?([А-Яа-яЁёA-Za-z\-\s]+?)(?:,|$)')
+  if ($districtMatch.Success) {
+    $city = Normalize-CityName $districtMatch.Groups[1].Value
+    if ($city) { return $city }
+  }
+  $match = [regex]::Match($Address, 'город\s*([А-Яа-яЁёA-Za-z\-\s]+?)(?:,|$)')
+  if ($match.Success) { return Normalize-CityName $match.Groups[1].Value }
   return ""
+}
+
+function Get-AddressParts {
+  param([string]$Address)
+  $city = Get-CityFromAddress $Address
+  $street = ""
+  $house = ""
+  if ($Address) {
+    $streetMatch = [regex]::Match($Address, '(?:ул\.|улица|пр-кт|проспект|пер\.|переулок|ш\.|шоссе|наб\.|набережная|б-р|бульвар)\s*([А-Яа-яЁёA-Za-z0-9\-\s]+?)(?:,|$)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    if ($streetMatch.Success) { $street = Normalize-CompanyQuery $streetMatch.Groups[1].Value }
+    $houseMatch = [regex]::Match($Address, '(?:д\.|дом|здание|зд\.)\s*([0-9]+[А-Яа-яA-Za-z0-9\/\-]*)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    if ($houseMatch.Success) { $house = (Normalize-CompanyQuery $houseMatch.Groups[1].Value).ToLowerInvariant() }
+    if (-not $house) {
+      $fallbackHouse = [regex]::Match($Address, ',\s*([0-9]+[А-Яа-яA-Za-z0-9\/\-]*)\s*(?:,|$)')
+      if ($fallbackHouse.Success) { $house = (Normalize-CompanyQuery $fallbackHouse.Groups[1].Value).ToLowerInvariant() }
+    }
+  }
+  return [ordered]@{
+    city = $city
+    street = $street
+    house = $house
+  }
+}
+
+function Get-FinanceHistoryItemValue {
+  param(
+    [array]$FinanceHistory,
+    [string]$Year,
+    [string]$Field
+  )
+  if (-not $FinanceHistory -or -not $Year -or -not $Field) { return "" }
+  $item = @($FinanceHistory | Where-Object { "$($_.year)" -eq "$Year" } | Select-Object -First 1)
+  if ($item.Count -eq 0) { return "" }
+  return $item[0].$Field
 }
 
 function Get-2GisCitySlug {
@@ -737,12 +928,170 @@ function Get-2GisCitySlug {
   return ""
 }
 
+function Get-2GisCityPoint {
+  param([string]$City)
+  $normalized = (Normalize-CompanyQuery $City).ToLowerInvariant()
+  $map = @{
+    "челябинск" = "61.4026,55.1599"
+    "москва" = "37.6173,55.7558"
+    "санкт петербург" = "30.3159,59.9391"
+    "екатеринбург" = "60.6057,56.8389"
+    "новосибирск" = "82.9204,55.0302"
+    "казань" = "49.1221,55.7887"
+    "нижний новгород" = "44.0059,56.3269"
+    "краснодар" = "38.9753,45.0355"
+    "уфа" = "55.9587,54.7351"
+    "пермь" = "56.2294,58.0105"
+    "тюмень" = "65.5343,57.1530"
+  }
+  if ($map.ContainsKey($normalized)) { return $map[$normalized] }
+  return ""
+}
+
+function Get-YandexCityPath {
+  param([string]$City)
+  $normalized = (Normalize-CompanyQuery $City).ToLowerInvariant()
+  $map = @{
+    "челябинск" = "56/chelyabinsk"
+    "москва" = "213/moscow"
+    "санкт петербург" = "2/saint-petersburg"
+    "екатеринбург" = "54/yekaterinburg"
+    "новосибирск" = "65/novosibirsk"
+    "казань" = "43/kazan"
+    "нижний новгород" = "47/nizhny-novgorod"
+    "краснодар" = "35/krasnodar"
+    "уфа" = "172/ufa"
+    "пермь" = "50/perm"
+    "тюмень" = "55/tyumen"
+  }
+  if ($map.ContainsKey($normalized)) { return $map[$normalized] }
+  return ""
+}
+
 function Get-MapCompanySearchName {
   param([string]$CompanyName)
   $clean = Normalize-CompanyQuery $CompanyName
-  $words = Get-MeaningfulCompanyWords $CompanyName
+  $withoutLegalForm = Remove-CompanyLegalForm $CompanyName
+  if ($withoutLegalForm) { return $withoutLegalForm }
+  $words = @($clean -split "\s+" | Where-Object { $_.Length -ge 2 -and $_.ToLowerInvariant() -notin (Get-CompanyLegalStopWords) })
   if ($words.Count -gt 0) { return (($words | Select-Object -First 4) -join " ") }
   return $clean
+}
+
+function Get-MapCompanySearchQueries {
+  param([string]$CompanyName)
+  $queries = New-Object System.Collections.Generic.List[string]
+  $add = {
+    param([string]$Value)
+    $text = Normalize-CompanyQuery $Value
+    if ($text -and -not $queries.Contains($text)) { $queries.Add($text) }
+  }
+  $clean = Normalize-CompanyQuery $CompanyName
+  foreach ($quotedName in @(Get-CompanyQuotedNames $CompanyName)) {
+    & $add $quotedName
+  }
+  & $add (Remove-CompanyLegalForm $CompanyName)
+  if (Test-ShortLegalCompanyName $CompanyName) { & $add $clean }
+  $meaningful = Get-MeaningfulCompanyWords $CompanyName
+  if ($meaningful.Count -gt 0) {
+    & $add (($meaningful | Select-Object -First 4) -join " ")
+  }
+  $brandTrigger = $clean -match '(констракшн|construction|инжиниринг|engineering|строй|строительство)'
+  if ($brandTrigger) {
+    $brandWords = @($meaningful | Where-Object { $_ -notmatch '^(констракшн|construction|инжиниринг|engineering|строй|строительство)$' })
+    if ($brandWords.Count -gt 0) { & $add $brandWords[0] }
+  }
+  return $queries
+}
+
+function Test-MapAddressMatch {
+  param(
+    [string]$ExpectedAddress,
+    [string]$FoundAddress
+  )
+  if (-not $ExpectedAddress -or -not $FoundAddress) { return $false }
+  $expectedParts = Get-AddressParts $ExpectedAddress
+  $foundParts = Get-AddressParts $FoundAddress
+  $expectedCity = Normalize-CompanyQuery $expectedParts.city
+  $foundCity = Normalize-CompanyQuery $foundParts.city
+  $cityMatches = $false
+  if ($expectedCity) {
+    $foundAddressNormalized = (Normalize-CompanyQuery $FoundAddress).ToLowerInvariant()
+    $cityMatches = $foundCity.ToLowerInvariant() -eq $expectedCity.ToLowerInvariant() -or $foundAddressNormalized -like "*$($expectedCity.ToLowerInvariant())*"
+  }
+  $streetMatches = $false
+  if ($expectedParts.street) {
+    $expectedStreetTokens = @((Normalize-CompanyQuery $expectedParts.street).ToLowerInvariant() -split "\s+" | Where-Object { $_.Length -ge 4 })
+    $foundAddressNormalized = (Normalize-CompanyQuery $FoundAddress).ToLowerInvariant()
+    foreach ($token in $expectedStreetTokens) {
+      if ($foundAddressNormalized -like "*$token*") { $streetMatches = $true; break }
+    }
+  }
+  $houseMatches = $false
+  if ($expectedParts.house) {
+    $foundAddressNormalized = (Normalize-CompanyQuery $FoundAddress).ToLowerInvariant()
+    $houseMatches = $foundAddressNormalized -match "(^|\s)$([regex]::Escape($expectedParts.house))(\s|$)"
+  }
+  if ($expectedCity -and $expectedParts.street -and $expectedParts.house) {
+    return $cityMatches -and $streetMatches -and $houseMatches
+  }
+  $expected = (Normalize-CompanyQuery $ExpectedAddress).ToLowerInvariant()
+  $found = (Normalize-CompanyQuery $FoundAddress).ToLowerInvariant()
+  $expectedTokens = @($expected -split "\s+" | Where-Object { $_.Length -ge 2 -and $_ -match '\d|[а-яёa-z]{4,}' })
+  if ($expectedTokens.Count -eq 0) { return $false }
+  $expectedNumbers = @($expectedTokens | Where-Object { $_ -match '^\d+[а-яёa-z]?$' })
+  $expectedStreetWords = @($expectedTokens | Where-Object { $_ -match '^[а-яёa-z]{5,}$' -and $_ -notin @("область", "город", "округ", "помещ", "помещение", "офис", "улица") })
+  $numberMatches = $false
+  foreach ($token in $expectedNumbers) {
+    if ($found -like "*$token*") { $numberMatches = $true; break }
+  }
+  $streetMatches = $false
+  foreach ($token in $expectedStreetWords) {
+    if ($found -like "*$token*") { $streetMatches = $true; break }
+  }
+  if ($numberMatches -and $streetMatches) { return $true }
+  $matched = 0
+  foreach ($token in $expectedTokens) {
+    if ($found -like "*$token*") { $matched++ }
+  }
+  return $matched -ge [Math]::Min(4, [Math]::Max(2, [int][Math]::Ceiling($expectedTokens.Count * 0.45)))
+}
+
+function Test-2GisCandidateMatch {
+  param(
+    $Item,
+    [string]$CompanyName,
+    [string]$Address,
+    [string]$City,
+    [string]$QueryMode
+  )
+  if ($null -eq $Item) { return $false }
+  $foundName = Normalize-CompanyQuery "$($Item.name) $($Item.org.name)"
+  $foundAddress = Normalize-CompanyQuery "$($Item.address_name) $($Item.address_comment)"
+  $nameTokens = @(Get-MeaningfulCompanyWords $CompanyName | Where-Object { $_.Length -ge 3 })
+  $matchedNameTokens = 0
+  foreach ($token in $nameTokens) {
+    if ($foundName.ToLowerInvariant() -like "*$($token.ToLowerInvariant())*") { $matchedNameTokens++ }
+  }
+  $nameMatches = $nameTokens.Count -ge 2 -and $matchedNameTokens -ge [Math]::Min(2, $nameTokens.Count)
+  if (-not $nameMatches -and $nameTokens.Count -eq 1 -and $nameTokens[0].Length -ge 6) {
+    $nameMatches = $foundName.ToLowerInvariant() -like "*$($nameTokens[0].ToLowerInvariant())*"
+  }
+  $companyNameNormalized = (Normalize-CompanyQuery $CompanyName).ToLowerInvariant()
+  $foundNameNormalized = $foundName.ToLowerInvariant()
+  if (-not $nameMatches -and $companyNameNormalized -match '(^|\s)смк(\s|$)' -and $foundNameNormalized -match 'строительн' -and $foundNameNormalized -match 'монтаж') {
+    $nameMatches = $matchedNameTokens -ge 1
+  }
+  $addressMatches = Test-MapAddressMatch $Address $foundAddress
+  $cityMatches = $true
+  if ($City) {
+    $cityMatches = (Normalize-CompanyQuery "$foundAddress $($Item.address_name)").ToLowerInvariant() -like "*$((Normalize-CompanyQuery $City).ToLowerInvariant())*"
+    if (-not $cityMatches -and $QueryMode -match "city|address") {
+      $cityMatches = $true
+    }
+  }
+  if ($QueryMode -eq "inn") { return $addressMatches -and $nameMatches }
+  return ($addressMatches -and $nameMatches) -or ($nameMatches -and $cityMatches)
 }
 
 function Invoke-WebText {
@@ -861,6 +1210,28 @@ function Get-CheckoTaxLineAmount {
   }
   if ($found) { return $sum.ToString("0.##", [Globalization.CultureInfo]::InvariantCulture) }
   return ""
+}
+
+function Add-SourceSearchAttempt {
+  param(
+    [array]$Attempts,
+    [string]$Source,
+    [string]$Query,
+    [string]$Url,
+    [string]$Status = "",
+    [string]$Title = "",
+    [string]$ReviewCount = "",
+    [string]$Note = ""
+  )
+  return @($Attempts) + (, [ordered]@{
+    source = $Source
+    query = $Query
+    url = $Url
+    status = $Status
+    title = $Title
+    review_count = $ReviewCount
+    note = $Note
+  })
 }
 
 function Get-CheckoApiUrl {
@@ -1083,11 +1454,39 @@ function Invoke-CheckoSource {
     $ratios = Get-CheckoRatios $html
     $staffHistory = Get-CheckoStaffHistory $html
     $timeline = Get-CheckoTimeline $html
+    $successorCompaniesText = Get-CheckoSuccessorText $plain $Inn
     $directorPersonFullUrl = ""
     if ($directorPersonUrl) { $directorPersonFullUrl = "https://checko.ru$directorPersonUrl" }
     $directorRelatedCompanies = Get-CheckoPersonCompanies $directorPersonFullUrl $Inn
+    $charterCapital = ConvertTo-CompactText $apiCollected.capital
+    if (-not $charterCapital) {
+      $charterCapital = Get-RegexValue $plain 'Уставн(?:ый|ой)\s+капитал\s*([0-9\s,.]+(?:тыс\.|млн|млрд)?\s*руб\.?)'
+    }
+    $financeRevenue = Merge-CollectedValue $apiCollected.revenue $revenue
+    $financeProfit = Merge-CollectedValue $apiCollected.net_profit $profit
+    $financeCapital = $finance.capital
+    if (-not $financeRevenue -and $finance.year) { $financeRevenue = Get-FinanceHistoryItemValue $financeHistory $finance.year "revenue" }
+    if (-not $financeProfit -and $finance.year) { $financeProfit = Get-FinanceHistoryItemValue $financeHistory $finance.year "net_profit" }
+    if (-not $financeCapital -and $finance.year) { $financeCapital = Get-FinanceHistoryItemValue $financeHistory $finance.year "capital" }
     $signals = @()
     if ($apiResult -and $apiResult.signals) { $signals += @($apiResult.signals) }
+    $capitalNumber = 0.0
+    $capitalForSignal = $charterCapital
+    [double]::TryParse(("$capitalForSignal" -replace "[^\d,.-]", "" -replace ",", "."), [Globalization.NumberStyles]::Any, [Globalization.CultureInfo]::InvariantCulture, [ref]$capitalNumber) | Out-Null
+    if ($capitalNumber -gt 0 -and $capitalNumber -le 10000) {
+      $signals += @{ level = "warning"; message = "Уставный капитал минимальный или близкий к минимальному: $capitalForSignal." }
+    }
+    $currentFounder = ""
+    foreach ($event in @($timeline)) {
+      if ($event.text -match "становится новым учредителем.*?([А-ЯЁ][А-Яа-яЁё]+\s+[А-ЯЁ][А-Яа-яЁё]+\s+[А-ЯЁ][А-Яа-яЁё]+)") {
+        $currentFounder = $Matches[1]
+        break
+      }
+    }
+    $directorForSignal = Merge-CollectedValue $apiCollected.director $director
+    if ($currentFounder -and $directorForSignal -and $directorForSignal -ne $currentFounder) {
+      $signals += @{ level = "warning"; message = "Руководитель и актуальный учредитель/собственник отличаются: руководитель $directorForSignal, учредитель $currentFounder." }
+    }
     $errors = @()
     if ($apiResult -and $apiResult.errors) { $errors += $apiResult.errors }
     $apiCollected = if ($apiResult -and $apiResult.collected) { $apiResult.collected } else { @{} }
@@ -1118,11 +1517,12 @@ function Invoke-CheckoSource {
       finance_year = $finance.year
       finance_history_text = Format-CheckoFinanceHistory $financeHistory
       finance_history = $financeHistory
-      revenue = Merge-CollectedValue $apiCollected.revenue $revenue
+      revenue = $financeRevenue
       revenue_change_percent = $finance.revenue_change_percent
-      net_profit = Merge-CollectedValue $apiCollected.net_profit $profit
+      net_profit = $financeProfit
       net_profit_change_percent = $finance.net_profit_change_percent
-      capital = Merge-CollectedValue $apiCollected.capital $finance.capital
+      charter_capital = $charterCapital
+      capital = $financeCapital
       capital_change_percent = $finance.capital_change_percent
       financial_ratios_2025 = $ratios
       financial_stability_kfn = ConvertTo-CompactText $ratios.kfn
@@ -1153,6 +1553,7 @@ function Invoke-CheckoSource {
       enforcement_proceedings_summary = Get-CheckoEnforcementText $html (Merge-CollectedValue $apiCollected.name $name)
       related_companies_by_person = Format-RelatedCompaniesList $directorRelatedCompanies
       related_companies_details = $directorRelatedCompanies
+      successor_companies_text = $successorCompaniesText
       arbitration = [ordered]@{
         total_cases = $legalCasesCount
         plaintiff_cases = $plaintiffCount
@@ -1207,33 +1608,44 @@ function Get-DreamJobQueries {
 function Get-CompanyNameQueries {
   param([string]$CompanyName)
   $queries = New-Object System.Collections.Generic.List[string]
+  $addQuery = {
+    param([string]$Value)
+    $text = Normalize-CompanyQuery $Value
+    if ($text -and -not $queries.Contains($text)) { $queries.Add($text) }
+  }
   if ($CompanyName) {
-    $queries.Add($CompanyName)
     $clean = Normalize-CompanyQuery $CompanyName
-    if ($clean -and -not $queries.Contains($clean)) { $queries.Add($clean) }
+    foreach ($quotedName in @(Get-CompanyQuotedNames $CompanyName)) {
+      & $addQuery $quotedName
+    }
+    & $addQuery (Remove-CompanyLegalForm $CompanyName)
+    if (Test-ShortLegalCompanyName $CompanyName) { & $addQuery $clean }
     $allWords = $clean -split "\s+" | Where-Object { $_.Length -ge 2 }
     $expansions = Get-CompanyAbbreviationExpansions
     foreach ($word in $allWords) {
       $key = $word.ToLowerInvariant()
       if ($expansions.ContainsKey($key)) {
         foreach ($expanded in $expansions[$key]) {
-          if ($expanded -and -not $queries.Contains($expanded)) { $queries.Add($expanded) }
+          & $addQuery $expanded
         }
       }
     }
     $words = Get-MeaningfulCompanyWords $CompanyName
     if ($words.Count -gt 0) {
       $short = ($words | Select-Object -First 3) -join " "
-      if ($short -and -not $queries.Contains($short)) { $queries.Add($short) }
+      & $addQuery $short
     }
     for ($i = 0; $i -lt $words.Count; $i++) {
       for ($j = $i + 1; $j -lt [Math]::Min($words.Count, $i + 4); $j++) {
         $pair = "$($words[$i]) $($words[$j])"
-        if (-not $queries.Contains($pair)) { $queries.Add($pair) }
+        & $addQuery $pair
       }
     }
     foreach ($word in $words) {
-      if (-not $queries.Contains($word)) { $queries.Add($word) }
+      $lower = $word.ToLowerInvariant()
+      if ($lower -notin (Get-CompanyLegalStopWords) -and $lower -notin (Get-GenericCompanyAbbreviationWords)) {
+        & $addQuery $word
+      }
     }
   }
   return $queries
@@ -1318,22 +1730,61 @@ function Add-DreamJobCandidate {
   }
 }
 
+function Invoke-DreamJobAjaxSearch {
+  param([string]$Query)
+  $searchUrl = "https://dreamjob.ru/ajax/search-employer?q=$([System.Uri]::EscapeDataString($Query))"
+  try {
+    $response = Invoke-WebText $searchUrl @{
+      "X-Requested-With" = "XMLHttpRequest"
+      "Accept" = "application/json, text/javascript, */*; q=0.01"
+    }
+    return @($response.Content | ConvertFrom-Json)
+  }
+  catch {
+    $nodeScript = @"
+const q = process.argv[1] || '';
+fetch('https://dreamjob.ru/ajax/search-employer?q=' + encodeURIComponent(q), {
+  headers: {
+    'X-Requested-With': 'XMLHttpRequest',
+    'Accept': 'application/json, text/javascript, */*; q=0.01',
+    'User-Agent': 'Mozilla/5.0 PlusZvenoCompanyCheck/0.2'
+  }
+}).then(async (r) => {
+  process.stdout.write(await r.text());
+}).catch((e) => {
+  process.stderr.write(e.message || String(e));
+  process.exit(1);
+});
+"@
+    $output = & node -e $nodeScript $Query 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $output) { throw }
+    return @(($output -join "") | ConvertFrom-Json)
+  }
+}
+
 function Invoke-DreamJobSource {
   param(
     [string]$Inn,
-    [string]$CompanyName
+    [string]$CompanyName,
+    [array]$SearchQueries = @()
   )
-  $queries = Get-DreamJobQueries $CompanyName
+  $queries = @($SearchQueries | Where-Object { $_ -and ($_ -replace "\D+", "") -ne $Inn } | ForEach-Object { Normalize-CompanyQuery $_ })
+  $queries += @(Get-DreamJobQueries $CompanyName)
+  $queries = Select-UniqueTextPreserveOrder @($queries | ForEach-Object { "$_" } | Where-Object { $_ })
   $searchAttempts = @()
   $selected = $null
   $bestScore = 0
   $candidates = @{}
   $companyTokens = @()
-  if ($CompanyName) {
-    $companyTokens = (Normalize-CompanyQuery $CompanyName) -split "\s+" | Where-Object { $_.Length -ge 3 }
+  $scoreName = Remove-CompanyLegalForm $CompanyName
+  if (-not $scoreName) { $scoreName = $CompanyName }
+  $scoreText = (@($scoreName) + @($SearchQueries | Where-Object { $_ -and ($_ -replace "\D+", "") -ne $Inn }) | ForEach-Object { Normalize-CompanyQuery $_ }) -join " "
+  if ($scoreText) {
+    $companyTokens = $scoreText -split "\s+" | Where-Object { $_.Length -ge 3 -and $_.ToLowerInvariant() -notin (Get-CompanyLegalStopWords) }
     if ($companyTokens.Count -gt 2 -and $companyTokens[0].Length -eq 3) {
       $companyTokens = $companyTokens | Select-Object -Skip 1
     }
+    $companyTokens = @($companyTokens | Select-Object -Unique)
   }
   if ($CompanyName -match "СМУ\s*[-№]?\s*2" -or (Normalize-CompanyQuery $CompanyName) -match "\bsmu\s*2\b|smu2") {
     Add-DreamJobCandidate $candidates "3050552" "СМУ2"
@@ -1343,12 +1794,7 @@ function Invoke-DreamJobSource {
   }
   foreach ($query in $queries) {
     try {
-      $searchUrl = "https://dreamjob.ru/ajax/search-employer?q=$([System.Uri]::EscapeDataString($query))"
-      $response = Invoke-WebText $searchUrl @{
-        "X-Requested-With" = "XMLHttpRequest"
-        "Accept" = "application/json, text/javascript, */*; q=0.01"
-      }
-      $items = $response.Content | ConvertFrom-Json
+      $items = Invoke-DreamJobAjaxSearch $query
       $searchAttempts += @{ query = $query; count = @($items).Count }
       foreach ($item in @($items)) {
         Add-DreamJobCandidate $candidates "$($item.id)" "$($item.text)"
@@ -1459,9 +1905,12 @@ function Invoke-DreamJobSource {
 function Invoke-AntijobSource {
   param(
     [string]$Inn,
-    [string]$CompanyName
+    [string]$CompanyName,
+    [array]$SearchQueries = @()
   )
-  $queries = Get-CompanyNameQueries $CompanyName
+  $queries = @($SearchQueries | Where-Object { $_ -and ($_ -replace "\D+", "") -ne $Inn } | ForEach-Object { Normalize-CompanyQuery $_ })
+  $queries += @(Get-CompanyNameQueries $CompanyName)
+  $queries = Select-UniqueTextPreserveOrder @($queries | ForEach-Object { "$_" } | Where-Object { $_ })
   $attempts = @()
   $tokens = @()
   $strictPhrase = ""
@@ -1477,17 +1926,25 @@ function Invoke-AntijobSource {
     $needsStrictPhraseMatch = $hasGenericAbbrev -and $tokens.Count -le 1 -and $strictPhrase
   }
   $candidateUrls = New-Object System.Collections.Generic.List[string]
+  $candidateUrlQueries = @{}
   $bestCandidate = $null
   $bestCandidateScore = -1
   if ($CompanyName) {
     $allWordsForSlug = (Normalize-CompanyQuery $CompanyName) -split "\s+" | Where-Object { $_.Length -ge 2 }
-    $legalWordsForSlug = @($allWordsForSlug | Where-Object { $_.ToLowerInvariant() -in (Get-CompanyLegalStopWords) })
+    $shortLegalFormsForSlug = @("ooo", "ооо", "zao", "зао", "pao", "пао", "ao", "ао", "nao", "нао", "ip", "ип")
+    $legalWordsForSlug = @($allWordsForSlug | Where-Object { $_.ToLowerInvariant() -in $shortLegalFormsForSlug })
     if ($legalWordsForSlug.Count -gt 0 -and $tokens.Count -gt 0) {
       $legalBrandSlug = ConvertTo-LatinSlug (($legalWordsForSlug[0], $tokens[0]) -join " ")
       if ($legalBrandSlug) {
         foreach ($suffix in @("", "-2", "-3", "-4", "-5")) {
           $url = "https://antijob.net/companies/$legalBrandSlug$suffix"
           if (-not $candidateUrls.Contains($url)) { $candidateUrls.Add($url) }
+          if (-not $candidateUrlQueries.ContainsKey($url)) { $candidateUrlQueries[$url] = (($legalWordsForSlug[0], $tokens[0]) -join " ") }
+        }
+        foreach ($path in @("black_list/$legalBrandSlug", "black_list/$($legalWordsForSlug[0])_$($tokens[0])")) {
+          $url = "https://antijob.net/$path"
+          if (-not $candidateUrls.Contains($url)) { $candidateUrls.Add($url) }
+          if (-not $candidateUrlQueries.ContainsKey($url)) { $candidateUrlQueries[$url] = (($legalWordsForSlug[0], $tokens[0]) -join " ") }
         }
       }
     }
@@ -1500,10 +1957,25 @@ function Invoke-AntijobSource {
     foreach ($suffix in @("", "-2", "-3", "-4", "-5")) {
       $url = "https://antijob.net/companies/$slug$suffix"
       if (-not $candidateUrls.Contains($url)) { $candidateUrls.Add($url) }
+      if (-not $candidateUrlQueries.ContainsKey($url)) { $candidateUrlQueries[$url] = $query }
     }
+    $blackListUrl = "https://antijob.net/black_list/$slug"
+    if (-not $candidateUrls.Contains($blackListUrl)) { $candidateUrls.Add($blackListUrl) }
+    if (-not $candidateUrlQueries.ContainsKey($blackListUrl)) { $candidateUrlQueries[$blackListUrl] = $query }
+    if ($queryWords.Count -eq 1) {
+      foreach ($prefix in @("ooo", "ooo_pkf", "pkf")) {
+        $url = "https://antijob.net/black_list/$prefix`_$slug"
+        if (-not $candidateUrls.Contains($url)) { $candidateUrls.Add($url) }
+        if (-not $candidateUrlQueries.ContainsKey($url)) { $candidateUrlQueries[$url] = $query }
+      }
+    }
+    $searchUrl = "https://antijob.net/search?page=1&name=$([System.Uri]::EscapeDataString($query))"
+    if (-not $candidateUrls.Contains($searchUrl)) { $candidateUrls.Add($searchUrl) }
+    if (-not $candidateUrlQueries.ContainsKey($searchUrl)) { $candidateUrlQueries[$searchUrl] = $query }
   }
 
   foreach ($url in $candidateUrls) {
+    $attemptQuery = if ($candidateUrlQueries.ContainsKey($url)) { $candidateUrlQueries[$url] } else { $CompanyName }
     try {
       $response = Invoke-WebText $url
       $html = $response.Content
@@ -1522,7 +1994,7 @@ function Invoke-AntijobSource {
       $count = ""
       $countMatch = [regex]::Match($plain, '(\d+)\s+отзыв', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
       if ($countMatch.Success) { $count = $countMatch.Groups[1].Value }
-      $attempts += [ordered]@{ url = $url; title = $title; matched = $matched; review_count = $count }
+      $attempts += [ordered]@{ query = $attemptQuery; url = $url; title = $title; matched = $matched; review_count = $count }
       $brandMatched = $false
       foreach ($token in $tokens) {
         if ($plain -like "*$token*" -or $title -like "*$token*") { $brandMatched = $true; break }
@@ -1544,6 +2016,20 @@ function Invoke-AntijobSource {
         }
         }
       }
+      elseif (-not $matched -and $brandMatched -and ($count -or $hasWorkReviews -or $url -match "/black_list/")) {
+        $candidateScore = 1
+        if ($count -and [int]$count -gt 0) { $candidateScore += 3 }
+        if ($url -match "/black_list/") { $candidateScore += 1 }
+        if ($candidateScore -gt $bestCandidateScore) {
+          $bestCandidateScore = $candidateScore
+          $bestCandidate = [ordered]@{
+            url = $url
+            title = $title
+            review_count = $count
+            reason = "Найдена похожая страница Antijob по бренду/slug, но строгого совпадения с юрлицом нет. Нужно сверить вручную."
+          }
+        }
+      }
       if ($matched -and $plain -match "Отзывы сотрудников|отзыва о работодателе|отзыв о работодателе") {
         return New-SourceResult -Code "antijob_reviews" -Title "Antijob отзывы" -Status "ok" -Url $url -Collected ([ordered]@{
           searched_inn = $Inn
@@ -1560,7 +2046,7 @@ function Invoke-AntijobSource {
       }
     }
     catch {
-      $attempts += [ordered]@{ url = $url; error = $_.Exception.Message }
+      $attempts += [ordered]@{ query = $attemptQuery; url = $url; error = $_.Exception.Message }
     }
   }
 
@@ -1597,38 +2083,62 @@ function Invoke-HhSource {
     [string]$CompanyName,
     [string]$Address = ""
   )
-  $queries = Get-CompanyNameQueries $CompanyName
+  $queries = @(Get-CompanyNameQueries $CompanyName)
   if (-not $queries -or $queries.Count -eq 0) { $queries = @($Inn) }
   $attempts = @()
   $city = Get-CityFromAddress $Address
   foreach ($query in ($queries | Select-Object -First 6)) {
     if (-not $query) { continue }
     $encoded = [System.Uri]::EscapeDataString($query)
-    $url = "https://hh.ru/search/vacancy?from=suggest_post&text=$encoded"
+    $url = "https://hh.ru/search/employer?text=$encoded"
     try {
       $response = Invoke-WebText $url
       $plain = Get-PlainText $response.Content
-      $companyCount = ""
+      $employerUrl = ""
+      $employerMatch = [regex]::Match($response.Content, 'href=["''](?<url>https://hh\.ru/employer/\d+|/employer/\d+)[^"'']*["'']', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+      if ($employerMatch.Success) {
+        $employerUrl = $employerMatch.Groups["url"].Value
+        if ($employerUrl.StartsWith("/")) { $employerUrl = "https://hh.ru$employerUrl" }
+      }
+      $employerCount = ""
       $vacancyCount = ""
-      $companyMatch = [regex]::Match($plain, 'Найден[аоы]?\s+(\d+)\s+компан', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-      if ($companyMatch.Success) { $companyCount = $companyMatch.Groups[1].Value }
-      $vacancyMatch = [regex]::Match($plain, 'Найден[аоы]?\s+(\d+)\s+ваканс', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-      if ($vacancyMatch.Success) { $vacancyCount = $vacancyMatch.Groups[1].Value }
-      $attempts += [ordered]@{ query = $query; url = $url; company_count = $companyCount; vacancy_count = $vacancyCount }
-      if ($companyCount -or $vacancyCount) {
-        return New-SourceResult -Code "hh_reviews" -Title "HH" -Status "candidate_review" -Url $url -Collected ([ordered]@{
+      $employerCountMatch = [regex]::Match($plain, 'Найден[аоы]?\s+(\d+)\s+(?:работодател|компан)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+      if ($employerCountMatch.Success) { $employerCount = $employerCountMatch.Groups[1].Value }
+      $attempts += [ordered]@{ query = $query; url = $(if ($employerUrl) { $employerUrl } else { $url }); employer_count = $employerCount }
+      if ($employerUrl -or $employerCount) {
+        return New-SourceResult -Code "hh_reviews" -Title "HH работодатель" -Status "candidate_review" -Url $(if ($employerUrl) { $employerUrl } else { $url }) -Collected ([ordered]@{
           searched_inn = $Inn
           searched_company_name = $CompanyName
           searched_city = $city
-          company_count = $companyCount
-          vacancy_count = $vacancyCount
+          employer_count = $employerCount
           search_attempts = $attempts
-          collection_mode = "hh_search_candidate"
-          reviews_url = $url
-          candidate_reason = "HH найден через поиск по названию. Нужно открыть ссылку и сверить работодателя/вакансии с юридическим лицом."
+          collection_mode = "hh_employer_search_candidate"
+          employer_url = $(if ($employerUrl) { $employerUrl } else { $url })
+          candidate_reason = "HH найден как карточка работодателя или выдача работодателей. Отзывы HH не хранит: отзывы проверяем через DreamJob."
         }) -NextActions @(
           "Открыть подобранную ссылку HH и сверить работодателя по названию, адресу, сайту, ИНН или описанию.",
-          "Отдельно решить, собираем отзывы работодателя или вакансии работодателя."
+          "Отзывы по работодателю искать и собирать через DreamJob."
+        )
+      }
+      $vacancyUrl = "https://hh.ru/search/vacancy?from=suggest_post&text=$encoded"
+      $vacancyResponse = Invoke-WebText $vacancyUrl
+      $vacancyPlain = Get-PlainText $vacancyResponse.Content
+      $vacancyMatch = [regex]::Match($vacancyPlain, 'Найден[аоы]?\s+(\d+)\s+ваканс', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+      if ($vacancyMatch.Success) { $vacancyCount = $vacancyMatch.Groups[1].Value }
+      $attempts += [ordered]@{ query = $query; url = $vacancyUrl; vacancy_count = $vacancyCount }
+      if ($vacancyCount) {
+        return New-SourceResult -Code "hh_reviews" -Title "HH работодатель" -Status "candidate_review" -Url $vacancyUrl -Collected ([ordered]@{
+          searched_inn = $Inn
+          searched_company_name = $CompanyName
+          searched_city = $city
+          vacancy_count = $vacancyCount
+          search_attempts = $attempts
+          collection_mode = "hh_vacancy_search_candidate"
+          employer_url = $vacancyUrl
+          candidate_reason = "На HH найдены вакансии по названию. Нужно открыть выдачу и сверить работодателя; отзывы проверяем через DreamJob."
+        }) -NextActions @(
+          "Открыть выдачу HH и найти карточку работодателя.",
+          "Отзывы по работодателю искать и собирать через DreamJob."
         )
       }
     }
@@ -1636,18 +2146,19 @@ function Invoke-HhSource {
       $attempts += [ordered]@{ query = $query; url = $url; error = $_.Exception.Message }
     }
   }
-  $fallbackQuery = if ($queries.Count -gt 0) { $queries[0] } else { $CompanyName }
+  $fallbackQuery = @($queries | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1)
+  $fallbackQuery = if ($fallbackQuery.Count -gt 0) { $fallbackQuery[0] } else { $CompanyName }
   if (-not $fallbackQuery) { $fallbackQuery = $Inn }
-  $fallbackUrl = "https://hh.ru/search/vacancy?from=suggest_post&text=$([System.Uri]::EscapeDataString($fallbackQuery))"
-  return New-SourceResult -Code "hh_reviews" -Title "HH" -Status "not_found" -Url $fallbackUrl -Collected ([ordered]@{
+  $fallbackUrl = "https://hh.ru/search/employer?text=$([System.Uri]::EscapeDataString($fallbackQuery))"
+  return New-SourceResult -Code "hh_reviews" -Title "HH работодатель" -Status "not_found" -Url $fallbackUrl -Collected ([ordered]@{
     searched_inn = $Inn
     searched_company_name = $CompanyName
     searched_city = $city
     search_attempts = $attempts
-    collection_mode = "hh_search_candidate"
-    reviews_url = $fallbackUrl
+    collection_mode = "hh_employer_search_candidate"
+    employer_url = $fallbackUrl
   }) -NextActions @(
-    "Если HH найден вручную, включить корректировку и вставить правильную ссылку."
+    "Если HH найден вручную, вставить ссылку на карточку работодателя. Отзывы собирать через DreamJob."
   )
 }
 
@@ -1671,9 +2182,17 @@ function Invoke-AvitoSource {
     search_query = $searchText
     collection_mode = "avito_search_candidate"
     reviews_url = $url
-    candidate_reason = "Avito добавлен как поисковая ссылка-кандидат. Нужно открыть и сверить профиль/вакансии с юридическим лицом."
+    search_attempts = @([ordered]@{
+      source = "Avito"
+      query = $searchText
+      url = $url
+      status = "candidate_review"
+      review_count = ""
+      note = "Avito не подтверждает компанию по ИНН; выдача может быть товарной или нерелевантной."
+    })
+    candidate_reason = "Avito добавлен только как поисковая ссылка-кандидат. Не считать найденной компанией без ручной сверки профиля/вакансии с юрлицом."
   }) -NextActions @(
-    "Открыть подобранную ссылку Avito и проверить, есть ли профиль компании или вакансии этого работодателя.",
+    "Открыть подобранную ссылку Avito и проверить, не является ли выдача товарной/нерелевантной.",
     "Если найден точный профиль/вакансия, включить корректировку и вставить прямую ссылку."
   )
 }
@@ -1713,7 +2232,7 @@ function Invoke-MapProbeSource {
     $foundByAddress = $false
     $addressUrl = ""
     $addressTitle = ""
-    if (-not ($foundByInn -or ($foundByName -and $foundByCity)) -and $Address) {
+    if ($false -and -not ($foundByInn -or ($foundByName -and $foundByCity)) -and $Address) {
       $mapName = Get-MapCompanySearchName $CompanyName
       $addressSearchText = if ($mapName) { "$mapName $city $Address" } else { $Address }
       $addressQuery = [System.Uri]::EscapeDataString($addressSearchText)
@@ -1746,6 +2265,14 @@ function Invoke-MapProbeSource {
       $status = if ($foundByInn -or $foundByAddress -or ($foundByName -and $foundByCity)) { "ok" } else { "not_found" }
       if ($titleText -match "Yandex Maps: search for places|Яндекс Карты: поиск мест|search for places") { $status = "not_found" }
     }
+    $signals = @()
+    if ($Code -eq "yandex_maps_reviews" -and "$titleText $plain" -match "Permanently closed|Больше не работает|Закрыто навсегда|не работает") {
+      $signals += @{ level = "warning"; message = "Яндекс Карты нашли карточку по адресу/названию с пометкой 'Больше не работает'. Это red flag и требует ручной проверки." }
+      if ($status -eq "ok") { $status = "candidate_review" }
+    }
+    if ($Code -eq "2gis_reviews" -and $status -eq "ok" -and -not $foundByInn) {
+      $signals += @{ level = "warning"; message = "2GIS нашел карточку не по ИНН, а по названию/адресу. Нужно сверить адрес, контакты и профиль компании вручную." }
+    }
     $purpose = if ($Code -eq "yandex_maps_reviews") { "contacts_and_address" } elseif ($Code -eq "2gis_reviews") { "company_card_by_name" } else { "static_html_probe" }
     return New-SourceResult -Code $Code -Title $Title -Status $status -Url $Url -Collected ([ordered]@{
       page_title = $titleText
@@ -1761,7 +2288,7 @@ function Invoke-MapProbeSource {
       found_by_address_in_static_html = $foundByAddress
       collection_mode = "static_html_probe"
       purpose = $purpose
-    }) -NextActions @(
+    }) -Signals $signals -NextActions @(
       "Open the prepared map search and verify address, phone, email/site and organization card.",
       "Map services load details dynamically; use a browser collector/API before treating not_found as a real absence."
     )
@@ -1778,42 +2305,101 @@ function Invoke-MapProbeSource {
   }
 }
 
+function New-YandexMapCandidateSource {
+  param(
+    [string]$Inn,
+    [string]$CompanyName,
+    [string]$Address = "",
+    [array]$SearchQueries = @()
+  )
+  $city = Get-CityFromAddress $Address
+  $cityPath = Get-YandexCityPath $city
+  $queries = @($SearchQueries | Where-Object { $_ -and ($_ -replace "\D+", "") -ne $Inn } | ForEach-Object { Normalize-CompanyQuery $_ })
+  $queries += @(Get-MapCompanySearchQueries $CompanyName)
+  $queries = Select-UniqueTextPreserveOrder @($queries | ForEach-Object { "$_" } | Where-Object { $_ })
+  if ($queries.Count -eq 0) { $queries = @($CompanyName, $Inn) | Where-Object { $_ } }
+  $attempts = @()
+  foreach ($query in ($queries | Select-Object -First 8)) {
+    $encoded = [System.Uri]::EscapeDataString($query)
+    $url = if ($cityPath) { "https://yandex.ru/maps/$cityPath/?text=$encoded" } else { "https://yandex.ru/maps/?text=$encoded" }
+    $attempts += [ordered]@{
+      mode = "browser_candidate"
+      query = $query
+      url = $url
+      status = "candidate_review"
+      note = "Браузерный сбор откроет выдачу, перейдет в карточку и сверит отзывы по найденной странице."
+    }
+  }
+  $firstUrl = if ($attempts.Count -gt 0) { $attempts[0].url } else { "https://yandex.ru/maps/" }
+  return New-SourceResult -Code "yandex_maps_reviews" -Title "Яндекс Карты" -Status "candidate_review" -Url $firstUrl -Collected ([ordered]@{
+    searched_inn = $Inn
+    searched_company_name = $CompanyName
+    searched_address = $Address
+    searched_city = $city
+    search_city_path = $cityPath
+    search_attempts = $attempts
+    reviews_url = $firstUrl
+    collection_mode = "browser_map_search_candidate"
+    candidate_reason = "Яндекс Карты рендерят карточку динамически; подтверждение названия/адреса и сбор отзывов выполняет браузерный адаптер."
+  }) -NextActions @(
+    "Запустить сбор: браузерный адаптер откроет кандидат, перейдет на вкладку отзывов и сохранит финальную ссылку карточки.",
+    "Если сайт откроет антибот-проверку, запустить сервер с PZ_BROWSER_HEADFUL=1 и пройти проверку один раз."
+  )
+}
+
 function Invoke-2GisApiSource {
   param(
     [string]$Inn,
     [string]$CompanyName,
     [string]$Address = "",
-    [string]$ApiKey = ""
+    [string]$ApiKey = "",
+    [array]$SearchQueries = @()
   )
   $city = Get-CityFromAddress $Address
   $citySlug = Get-2GisCitySlug $city
-  $publicSearchUrl = if ($citySlug) { "https://2gis.ru/$citySlug/search/$([System.Uri]::EscapeDataString($Inn))" } else { "https://2gis.ru/search/$([System.Uri]::EscapeDataString($Inn))" }
+  $cityPoint = Get-2GisCityPoint $city
+  $mapQueries = @($SearchQueries | Where-Object { $_ -and ($_ -replace "\D+", "") -ne $Inn } | ForEach-Object { Normalize-CompanyQuery $_ })
+  $mapQueries += @(Get-MapCompanySearchQueries $CompanyName)
+  $mapQueries = Select-UniqueTextPreserveOrder @($mapQueries | ForEach-Object { "$_" } | Where-Object { $_ })
+  $publicSearchText = if ($mapQueries.Count -gt 0) { $mapQueries[0] } elseif ($Address) { $Address } else { $Inn }
+  $publicSearchUrl = if ($citySlug) { "https://2gis.ru/$citySlug/search/$([System.Uri]::EscapeDataString($publicSearchText))" } else { "https://2gis.ru/search/$([System.Uri]::EscapeDataString($publicSearchText))" }
   $fields = "items.point,items.contact_groups,items.reviews,items.external_content,items.rubrics,items.org"
   $attempts = @()
   if ([string]::IsNullOrWhiteSpace($ApiKey)) {
-    return New-SourceResult -Code "2gis_reviews" -Title "2GIS карточка организации" -Status "not_configured" -Url $publicSearchUrl -Collected ([ordered]@{
+    foreach ($mapQuery in ($mapQueries | Select-Object -First 8)) {
+      $searchUrl = if ($citySlug) { "https://2gis.ru/$citySlug/search/$([System.Uri]::EscapeDataString($mapQuery))" } else { "https://2gis.ru/search/$([System.Uri]::EscapeDataString($mapQuery))" }
+      $attempts += [ordered]@{
+        mode = "public_search"
+        query = $mapQuery
+        url = $searchUrl
+        status = "candidate_review"
+      }
+    }
+    return New-SourceResult -Code "2gis_reviews" -Title "2GIS карточка организации" -Status "candidate_review" -Url $publicSearchUrl -Collected ([ordered]@{
       searched_inn = $Inn
       searched_company_name = $CompanyName
       searched_address = $Address
       searched_city = $city
+      search_city_slug = $citySlug
       collection_mode = "2gis_places_api"
       api_key_configured = $false
+      search_attempts = $attempts
     }) -NextActions @(
-      "Задайте DGIS_API_KEY в окружении Windows, чтобы искать карточку 2GIS через Places API.",
-      "Тексты отзывов 2GIS продолжаем собирать из HTML страницы отзывов."
+      "Браузерный сбор откроет подготовленные ссылки поиска 2GIS и сохранит финальную карточку, если сайт не потребует антибот-проверку.",
+      "Если 2GIS откроет /museum, запустить сервер с PZ_BROWSER_HEADFUL=1 и пройти проверку один раз."
     )
   }
 
   $queries = @()
-  $queries += @{ mode = "inn"; text = $Inn }
-  $mapCompanySearchName = Get-MapCompanySearchName $CompanyName
-  if ($mapCompanySearchName -and $city) { $queries += @{ mode = "name_city"; text = "$mapCompanySearchName $city" } }
-  if ($mapCompanySearchName) { $queries += @{ mode = "name"; text = $mapCompanySearchName } }
-  if ($Address) { $queries += @{ mode = "address"; text = "$mapCompanySearchName $Address" } }
+  foreach ($mapQuery in $mapQueries) {
+    $queries += @{ mode = "name"; text = $mapQuery }
+  }
+  if ($queries.Count -eq 0 -and $Inn) { $queries += @{ mode = "inn"; text = $Inn } }
 
   foreach ($query in $queries) {
     if ([string]::IsNullOrWhiteSpace($query.text)) { continue }
     $apiUrl = "https://catalog.api.2gis.com/3.0/items?q=$([System.Uri]::EscapeDataString($query.text))&fields=$([System.Uri]::EscapeDataString($fields))&key=$([System.Uri]::EscapeDataString($ApiKey))"
+    if ($cityPoint) { $apiUrl = "$apiUrl&point=$([System.Uri]::EscapeDataString($cityPoint))&radius=50000" }
     try {
       $response = Invoke-RestMethod -Uri $apiUrl -Method Get -Headers @{
         "Accept" = "application/json"
@@ -1827,10 +2413,17 @@ function Invoke-2GisApiSource {
         count = $items.Count
       }
       $branchItems = @($items | Where-Object { $_.type -eq "branch" })
-      $selected = if ($branchItems.Count -gt 0) { $branchItems[0] } elseif ($items.Count -gt 0) { $items[0] } else { $null }
-      if ($selected) {
-        $itemId = "$($selected.id)"
-        $reviewsUrl = if ($citySlug -and $itemId) { "https://2gis.ru/$citySlug/firm/$itemId/tab/reviews" } elseif ($itemId) { "https://2gis.ru/firm/$itemId/tab/reviews" } else { $publicSearchUrl }
+      $candidateItems = if ($branchItems.Count -gt 0) { $branchItems } else { $items }
+      $selected = @($candidateItems | Where-Object { Test-2GisCandidateMatch $_ $CompanyName $Address $city $query.mode } | Select-Object -First 1)
+      if ($selected.Count -gt 0) { $selected = $selected[0] } else { $selected = $null }
+      if ($items.Count -gt 0 -and -not $selected) {
+        $first = $items[0]
+        $attempts[-1].rejected_first_result = "$($first.name)"
+        $attempts[-1].rejected_reason = "2GIS вернул карточку без достаточного совпадения по названию/адресу."
+      }
+                          if ($selected) {
+                            $itemId = "$($selected.id)"
+                            $reviewsUrl = if ($citySlug -and $itemId) { "https://2gis.ru/$citySlug/firm/$itemId/tab/reviews" } elseif ($itemId) { "https://2gis.ru/firm/$itemId/tab/reviews" } else { $publicSearchUrl }
         $contacts = @()
         foreach ($group in @($selected.contact_groups)) {
           foreach ($contact in @($group.contacts)) {
@@ -1841,7 +2434,11 @@ function Invoke-2GisApiSource {
             }
           }
         }
-        return New-SourceResult -Code "2gis_reviews" -Title "2GIS карточка организации" -Status "ok" -Url $reviewsUrl -Collected ([ordered]@{
+                            $signals = @()
+                            if ($query.mode -ne "inn") {
+                              $signals += @{ level = "warning"; message = "2GIS нашел карточку по запросу '$($query.text)', не по ИНН. Нужно сверить адрес и профиль вручную." }
+                            }
+                            return New-SourceResult -Code "2gis_reviews" -Title "2GIS карточка организации" -Status "ok" -Url $reviewsUrl -Collected ([ordered]@{
           api_item_id = $itemId
           api_org_id = if ($selected.org) { "$($selected.org.id)" } else { "" }
           name = "$($selected.name)"
@@ -1863,10 +2460,10 @@ function Invoke-2GisApiSource {
           api_match_mode = $query.mode
           collection_mode = "2gis_places_api"
           reviews_url = $reviewsUrl
-        }) -NextActions @(
-          "Тексты отзывов собрать отдельным HTML-сбором по ссылке на вкладку отзывов 2GIS.",
-          "Если API нашел карточку не по ИНН, сверить название и адрес с Checko."
-        )
+                              }) -Signals $signals -NextActions @(
+                              "Тексты отзывов собрать отдельным HTML-сбором по ссылке на вкладку отзывов 2GIS.",
+                              "Если API нашел карточку не по ИНН, сверить название и адрес с Checko."
+                            )
       }
     }
     catch {
@@ -1878,16 +2475,27 @@ function Invoke-2GisApiSource {
     }
   }
 
-  return New-SourceResult -Code "2gis_reviews" -Title "2GIS карточка организации" -Status "not_found" -Url $publicSearchUrl -Collected ([ordered]@{
-    searched_inn = $Inn
+  foreach ($mapQuery in ($mapQueries | Select-Object -First 8)) {
+    $searchUrl = if ($citySlug) { "https://2gis.ru/$citySlug/search/$([System.Uri]::EscapeDataString($mapQuery))" } else { "https://2gis.ru/search/$([System.Uri]::EscapeDataString($mapQuery))" }
+    $attempts += [ordered]@{
+      mode = "public_search"
+      query = $mapQuery
+      url = $searchUrl
+      status = "candidate_review"
+    }
+  }
+  return New-SourceResult -Code "2gis_reviews" -Title "2GIS карточка организации" -Status "candidate_review" -Url $publicSearchUrl -Collected ([ordered]@{
+          searched_inn = $Inn
     searched_company_name = $CompanyName
     searched_address = $Address
     searched_city = $city
+    search_city_slug = $citySlug
     search_attempts = $attempts
     collection_mode = "2gis_places_api"
     api_key_configured = $true
+    candidate_reason = "2GIS API не подтвердил карточку автоматически, но подготовлена ссылка поиска по названию для ручной сверки."
   }) -NextActions @(
-    "2GIS API не нашел карточку по ИНН/названию; проверьте поиск по адресу или добавьте прямую ссылку в админке.",
+    "Откройте подготовленную ссылку 2GIS, сверьте карточку по названию, адресу и профилю.",
     "Тексты отзывов 2GIS собираются только из HTML страницы отзывов."
   )
 }
@@ -1950,9 +2558,43 @@ function Get-Risk {
     $summary += "Требуется ручная проверка источников: $manualCount."
   }
   foreach ($source in $sourceItems) {
+    if ($source.code -eq "checko_company_card" -and $source.collected -and $source.collected.reliability_facts) {
+      $facts = $source.collected.reliability_facts
+      $riskFacts = @()
+      foreach ($bucketName in @("negative", "attention")) {
+        $bucket = $null
+        if ($facts -is [System.Collections.IDictionary]) {
+          $bucket = $facts[$bucketName]
+        }
+        elseif ($facts.PSObject.Properties[$bucketName]) {
+          $bucket = $facts.PSObject.Properties[$bucketName].Value
+        }
+        if ($bucket -is [System.Collections.IDictionary]) {
+          $riskFacts += @($bucket.Values)
+        }
+        elseif ($bucket -is [array]) {
+          $riskFacts += @($bucket)
+        }
+        elseif ($bucket) {
+          $riskFacts += "$bucket"
+        }
+      }
+      foreach ($fact in @($riskFacts | Where-Object { $_ })) {
+        $factText = "$fact"
+        if ($factText -match "банкрот|Федресурс|ФССП|исполнительн|задолж|отрицательн.*денежн.*поток") {
+          $score += 15
+          $summary += "$($source.title): $factText"
+        }
+      }
+    }
     foreach ($signal in $source.signals) {
       if ($signal.level -eq "critical") { $score += 40 }
-      elseif ($signal.level -eq "warning") { $score += 15 }
+      elseif ($signal.level -eq "warning") {
+        $message = "$($signal.message)"
+        if ($message -match "Больше не работает|Закрыто|ликвид|банкрот|РНП|недобросовест|red flag") {
+          $score += 15
+        }
+      }
       $summary += "$($source.title): $($signal.message)"
     }
     if ($source.status -eq "error") {
@@ -2062,38 +2704,39 @@ function ConvertTo-Markdown {
 
 $normalizedInn = Normalize-Inn $Inn
 $encodedInn = [System.Uri]::EscapeDataString($normalizedInn)
-$sources = @()
-$sources += Invoke-FnsEgrul $normalizedInn
-$checkoResult = Invoke-CheckoSource $normalizedInn
-$sources += $checkoResult
+$sourcesList = [System.Collections.ArrayList]::new()
+Add-TimedSource $sourcesList "ФНС ЕГРЮЛ" { Invoke-FnsEgrul $normalizedInn }
+Add-TimedSource $sourcesList "Checko" { Invoke-CheckoSource $normalizedInn }
+$sources = @($sourcesList)
+$checkoResult = @($sources | Where-Object { $_.code -eq "checko_company_card" } | Select-Object -First 1)[0]
 if (-not (Has-CriticalStop $sources)) {
-  $sources += New-BoNalogSource $normalizedInn $checkoResult
-  $sources += New-CheckoContactsSource $checkoResult
+  Add-TimedSource $sourcesList "БО ФНС из Checko" { New-BoNalogSource $normalizedInn $checkoResult }
+  Add-TimedSource $sourcesList "Контакты из Checko" { New-CheckoContactsSource $checkoResult }
+  $sources = @($sourcesList)
   $companyNameForReviews = ""
-  if ($checkoResult.collected -and $checkoResult.collected.Contains("name")) {
+  $fnsResult = @($sources | Where-Object { $_.code -eq "fns_egrul" } | Select-Object -First 1)
+  if ($fnsResult -and $fnsResult[0].collected -and $fnsResult[0].collected.Contains("name")) {
+    $companyNameForReviews = $fnsResult[0].collected.name
+  }
+  if (-not $companyNameForReviews -and $checkoResult.collected -and $checkoResult.collected.Contains("name")) {
     $companyNameForReviews = $checkoResult.collected.name
   }
-  if (-not $companyNameForReviews) {
-    $fnsResult = @($sources | Where-Object { $_.code -eq "fns_egrul" } | Select-Object -First 1)
-    if ($fnsResult -and $fnsResult[0].collected -and $fnsResult[0].collected.Contains("name")) {
-      $companyNameForReviews = $fnsResult[0].collected.name
-    }
-  }
   if (-not $companyNameForReviews) { $companyNameForReviews = $normalizedInn }
-  $mapAddress = if ($checkoResult.collected.address) { $checkoResult.collected.address } else { "" }
-  $sources += New-KadArbitrSource $normalizedInn $companyNameForReviews $checkoResult
-  $sources += Invoke-DreamJobSource $normalizedInn $companyNameForReviews
-  $sources += Invoke-AntijobSource $normalizedInn $companyNameForReviews
-  $sources += Invoke-HhSource $normalizedInn $companyNameForReviews $mapAddress
-  $sources += Invoke-AvitoSource $normalizedInn $companyNameForReviews $mapAddress
-  $mapCity = Get-CityFromAddress $mapAddress
-  $map2GisCitySlug = Get-2GisCitySlug $mapCity
-  $mapCompanySearchName = Get-MapCompanySearchName $companyNameForReviews
-  $mapSearchText = if ($mapCompanySearchName -and $mapCity) { "$mapCompanySearchName $mapCity" } elseif ($mapCompanySearchName) { $mapCompanySearchName } else { $normalizedInn }
-  $mapQuery = [System.Uri]::EscapeDataString($mapSearchText)
-  $sources += Invoke-MapProbeSource "yandex_maps_reviews" "Yandex Maps contacts" "https://yandex.ru/maps/?text=$mapQuery" $normalizedInn $companyNameForReviews $mapAddress
-  $sources += Invoke-2GisApiSource $normalizedInn $companyNameForReviews $mapAddress $DgisApiKey
-  $sources += New-InternalSource $normalizedInn
+  $manualSearchQueries = @($SearchQuery -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  $mapAddress = ""
+  if ($fnsResult -and $fnsResult[0].collected -and $fnsResult[0].collected.Contains("address")) { $mapAddress = $fnsResult[0].collected.address }
+  if (-not $mapAddress -and $checkoResult.collected.address) { $mapAddress = $checkoResult.collected.address }
+  if (-not $QuickOnly) {
+    Add-TimedSource $sourcesList "Арбитраж из Checko" { New-KadArbitrSource $normalizedInn $companyNameForReviews $checkoResult }
+    Add-TimedSource $sourcesList "DreamJob" { Invoke-DreamJobSource $normalizedInn $companyNameForReviews $manualSearchQueries }
+    Add-TimedSource $sourcesList "Antijob" { Invoke-AntijobSource $normalizedInn $companyNameForReviews $manualSearchQueries }
+    $mapCity = Get-CityFromAddress $mapAddress
+    $map2GisCitySlug = Get-2GisCitySlug $mapCity
+    Add-TimedSource $sourcesList "Яндекс Карты" { New-YandexMapCandidateSource $normalizedInn $companyNameForReviews $mapAddress $manualSearchQueries }
+    Add-TimedSource $sourcesList "2GIS" { Invoke-2GisApiSource $normalizedInn $companyNameForReviews $mapAddress $DgisApiKey $manualSearchQueries }
+    Add-TimedSource $sourcesList "Внутренняя история" { New-InternalSource $normalizedInn }
+    $sources = @($sourcesList)
+  }
 }
 
 $legalCard = Get-LegalCard $sources
@@ -2111,6 +2754,10 @@ $report = [ordered]@{
     value = "Official email or phone is not confirmed automatically"
     source = "contacts_public"
   })
+  diagnostics = [ordered]@{
+    quick_only = [bool]$QuickOnly
+    source_timings = @($SourceTimings)
+  }
   sources = $sources
 }
 

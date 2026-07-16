@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "check:browser-collector": "node --check browser_review_collector.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.45.0"
+  }
+}

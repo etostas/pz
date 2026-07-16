@@ -20,12 +20,18 @@ const phoneLogin = document.querySelector('#phoneLogin');
 const sessionActions = document.querySelector('#sessionActions');
 const topNav = document.querySelector('#topNav');
 const adminCompanyInn = document.querySelector('#adminCompanyInn');
+const companyCheckTitle = document.querySelector('#companyCheckTitle');
+const companyInnEditor = document.querySelector('#companyInnEditor');
+const companyInnSummary = document.querySelector('#companyInnSummary');
+const editCompanyInn = document.querySelector('#editCompanyInn');
 const companyCheckCommand = document.querySelector('#companyCheckCommand');
 const companyReportFile = document.querySelector('#companyReportFile');
 const companyReportView = document.querySelector('#companyReportView');
 const companyReportEmpty = document.querySelector('#companyReportEmpty');
 const runCompanyCheck = document.querySelector('#runCompanyCheck');
-const companyCheckProgress = document.querySelector('#companyCheckProgress');
+const companyCheckFlow = document.querySelector('#companyCheckFlow');
+const companyCheckLog = document.querySelector('#companyCheckLog');
+const companyStagePanel = document.querySelector('#companyStagePanel');
 const manualReviewPanel = document.querySelector('#manualReviewPanel');
 const manualReviewSources = document.querySelector('#manualReviewSources');
 const vacancyCheckLink = document.querySelector('#vacancyCheckLink');
@@ -38,15 +44,7 @@ const checkPhoneNext = document.querySelector('#checkPhoneNext');
 const routes = ['home', 'check-vacancy', 'auth', 'sms', 'notifications', 'profile', 'vacancies', 'vacancy', 'rating', 'admin'];
 const ADMIN_PHONE_DIGITS = '70000000000';
 const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8788' : '';
-const companyCheckSteps = [
-  { id: 'request', label: 'Отправляем запрос локальному серверу' },
-  { id: 'fns', label: 'ФНС ЕГРЮЛ: юридическая карточка и статус' },
-  { id: 'checko', label: 'Checko: статус, финансы, контакты и риски' },
-  { id: 'critical', label: 'Проверяем стоп-факторы: ликвидация и банкротство' },
-  { id: 'finance', label: 'БО ФНС и финансовые показатели' },
-  { id: 'reputation', label: 'DreamJob, карты и открытые источники' },
-  { id: 'save', label: 'Сохраняем отчет в локальную историю' },
-];
+let companyCheckStage = 1;
 
 const specialties = [
   'Сварщик НАКС РД',
@@ -215,14 +213,33 @@ let heroSlideIndex = 0;
 let heroTimer = null;
 let currentCompanyReport = null;
 let currentCompanyProfile = null;
+let currentCompanySearchQuery = '';
 
 function escapeHtml(value = '') {
-  return String(value)
+  return fixMojibake(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function fixMojibake(value = '') {
+  const text = String(value ?? '');
+  if (!/[╨╤]/.test(text)) return text;
+  const map = {
+    '╨░': 'а', '╨▒': 'б', '╨▓': 'в', '╨│': 'г', '╨┤': 'д', '╨╡': 'е', '╤С': 'ё',
+    '╨╢': 'ж', '╨╖': 'з', '╨╕': 'и', '╨╣': 'й', '╨║': 'к', '╨╗': 'л', '╨╝': 'м',
+    '╨╜': 'н', '╨╛': 'о', '╨┐': 'п', '╤А': 'р', '╤Б': 'с', '╤В': 'т', '╤Г': 'у',
+    '╤Д': 'ф', '╤Е': 'х', '╤Ж': 'ц', '╤З': 'ч', '╤И': 'ш', '╤Й': 'щ', '╤К': 'ъ',
+    '╤Л': 'ы', '╤М': 'ь', '╤Н': 'э', '╤О': 'ю', '╤П': 'я',
+    '╨Р': 'А', '╨С': 'Б', '╨Т': 'В', '╨У': 'Г', '╨Ф': 'Д', '╨Х': 'Е', '╨Ц': 'Ж',
+    '╨Ч': 'З', '╨Ш': 'И', '╨Щ': 'Й', '╨Ъ': 'К', '╨Ы': 'Л', '╨Ь': 'М', '╨Э': 'Н',
+    '╨Ю': 'О', '╨Я': 'П', '╨а': 'Р', '╨б': 'С', '╨в': 'Т', '╨г': 'У', '╨д': 'Ф',
+    '╨е': 'Х', '╨ж': 'Ц', '╨з': 'Ч', '╨и': 'Ш', '╨й': 'Щ', '╨к': 'Ъ', '╨л': 'Ы',
+    '╨м': 'Ь', '╨н': 'Э', '╨о': 'Ю', '╨п': 'Я',
+  };
+  return text.replace(/╨.|╤./g, (chunk) => map[chunk] || chunk);
 }
 
 function formatDateTime(value) {
@@ -295,6 +312,9 @@ function setPage(name) {
     link.classList.toggle('active', link.dataset.route === name);
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'admin' && companyInnEditor && !companyInnEditor.hidden) {
+    setTimeout(() => adminCompanyInn?.focus(), 50);
+  }
 }
 
 function setHeroSlide(index) {
@@ -354,7 +374,7 @@ function renderTopNav() {
     return;
   }
   const items = [
-    ...(userRole === 'admin' ? [{ route: 'admin', label: 'Управление' }] : []),
+    ...(userRole === 'admin' ? [{ route: 'admin', label: 'Админка' }] : []),
     { route: 'vacancies', label: 'Вакансии' },
     ...(isAuthenticated ? [{ route: 'notifications', label: 'Уведомления' }] : []),
     { route: 'profile', label: 'Профиль' },
@@ -457,96 +477,529 @@ function updateCompanyCheckCommand() {
 function setCompanyCheckLoading(isLoading) {
   if (!runCompanyCheck) return;
   runCompanyCheck.disabled = isLoading;
-  runCompanyCheck.textContent = isLoading ? 'Собираю...' : 'Собрать отчет';
+  runCompanyCheck.textContent = isLoading ? 'Проверяю...' : 'Проверить';
 }
 
-function renderCompanyCheckProgress(activeIndex = -1, doneIds = [], errorId = '') {
-  if (!companyCheckProgress) return;
-  companyCheckProgress.hidden = false;
-  companyCheckProgress.innerHTML = companyCheckSteps.map((step, index) => {
-    const state = errorId === step.id
-      ? 'error'
-      : doneIds.includes(step.id)
-        ? 'done'
-        : index === activeIndex
-          ? 'active'
-          : '';
-    return `<div class="progress-step ${state}">${escapeHtml(step.label)}</div>`;
-  }).join('');
+function formatDuration(ms = 0) {
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  if (seconds < 60) return `${seconds} сек.`;
+  return `${Math.floor(seconds / 60)} мин. ${seconds % 60} сек.`;
 }
 
-function getDoneCompanyCheckSteps(report, saved) {
-  const sources = asArray(report?.sources);
-  const sourceCodes = sources.map((source) => source.code);
-  const done = ['request'];
-  if (sourceCodes.includes('fns_egrul')) done.push('fns');
-  if (sourceCodes.includes('checko_company_card')) done.push('checko', 'critical');
-  if (sourceCodes.includes('bo_nalog')) done.push('finance');
-  if (sourceCodes.some((code) => ['dreamjob_reviews', 'yandex_maps_reviews', '2gis_reviews', 'kad_arbitr'].includes(code))) {
-    done.push('reputation');
+function resetCompanyCheckLog() {
+  if (!companyCheckLog) return;
+  companyCheckLog.hidden = false;
+  companyCheckLog.innerHTML = '';
+}
+
+function addCompanyCheckLog(message = '') {
+  if (!companyCheckLog) return;
+  companyCheckLog.hidden = false;
+  const time = new Intl.DateTimeFormat('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date());
+  companyCheckLog.insertAdjacentHTML('beforeend', `<div><span>${escapeHtml(time)}</span>${escapeHtml(message)}</div>`);
+  companyCheckLog.scrollTop = companyCheckLog.scrollHeight;
+}
+
+function logSourceTimings(report = {}) {
+  const timings = asArray(report?.diagnostics?.source_timings);
+  if (!timings.length) return;
+  addCompanyCheckLog('Время по источникам:');
+  timings.forEach((item) => {
+    const seconds = Number(item.seconds || 0);
+    addCompanyCheckLog(`${item.source || 'Источник'}: ${formatDuration(seconds * 1000)}.`);
+  });
+}
+
+function logFallbackDiagnostics(report = {}) {
+  if (report?.diagnostics?.fallback_used !== 'local_registry') return;
+  addCompanyCheckLog('Название и короткая карточка взяты из локального справочника: внешний источник не вернул достаточно данных.');
+}
+
+function logReviewSearchResults(report = {}) {
+  const rows = buildSearchVariantRows(report);
+  if (!rows.length) {
+    addCompanyCheckLog('Источники проверены: вариантов для таблицы не найдено.');
+    return;
   }
-  if (saved) done.push('save');
-  return done;
+  addCompanyCheckLog('Результаты поиска источников:');
+  rows.forEach((row) => {
+    const state = getSearchVariantState(row);
+    const stateText = state === 'found' ? 'найдено' : state === 'doubt' ? 'нужна сверка' : 'не найдено';
+    const urlText = row.url ? ` Ссылка: ${row.url}` : '';
+    addCompanyCheckLog(`${row.sourceTitle}: ${stateText}. ${row.countText || ''}.${urlText}`);
+  });
+}
+
+function setCompanyStage(stage = 1) {
+  companyCheckStage = stage;
+  setCompanyCheckFlow(stage, Array.from({ length: Math.max(0, stage - 1) }, (_, index) => index + 1));
+  if (companyInnSummary) companyInnSummary.hidden = stage !== 1 || !currentCompanyReport;
+}
+
+function setCompanyInnEditMode(isEditing) {
+  if (companyInnEditor) companyInnEditor.hidden = !isEditing;
+  if (companyInnSummary) companyInnSummary.hidden = isEditing;
+  if (isEditing) {
+    if (companyCheckTitle) companyCheckTitle.hidden = true;
+    setCompanyStage(1);
+    if (companyStagePanel) companyStagePanel.hidden = true;
+    if (manualReviewPanel) manualReviewPanel.hidden = true;
+    if (companyReportView) companyReportView.hidden = true;
+    setTimeout(() => adminCompanyInn?.focus(), 30);
+  }
+}
+
+function renderCompanyCheckTitle(report = {}) {
+  if (!companyCheckTitle) return;
+  const inn = report?.inn || adminCompanyInn?.value || '';
+  companyCheckTitle.hidden = false;
+  companyCheckTitle.innerHTML = `
+    <div>
+      <span>ИНН ${escapeHtml(inn)}</span>
+    </div>
+  `;
+}
+
+function setCompanyCheckFlow(activeStep = 1, doneSteps = []) {
+  if (!companyCheckFlow) return;
+  companyCheckFlow.querySelectorAll('[data-flow-step]').forEach((item) => {
+    const step = Number(item.dataset.flowStep || 0);
+    item.classList.toggle('active', step === activeStep);
+    item.classList.remove('done');
+  });
+}
+
+function renderCompanyStage(stage = 1, report = currentCompanyReport) {
+  if (!companyStagePanel || !report) return;
+  setCompanyStage(stage);
+  companyStagePanel.hidden = false;
+  if (manualReviewPanel) manualReviewPanel.hidden = true;
+  if (companyReportView) companyReportView.hidden = true;
+
+  if (stage === 1) {
+    const name = getCompanyDisplayName(report);
+    if (!name) {
+      companyStagePanel.innerHTML = `
+        <div class="stage-card warn">
+          <p>ФНС/Checko не вернули название автоматически. Для поиска источников укажите название компании вручную.</p>
+          <label class="review-keywords">
+            <span>Поисковые слова</span>
+            <textarea data-company-search-queries rows="2">${escapeHtml(buildReviewSearchKeywords(report))}</textarea>
+          </label>
+          <div class="stage-actions"><button class="primary-btn" type="button" data-company-next="2">Далее</button></div>
+        </div>
+      `;
+      return;
+    }
+    const metrics = getCheckoBriefMetrics(report);
+    const relatedCompanies = getRelatedConstructionCompanies(report);
+    const reliabilityFacts = getCheckoReliabilityFacts(report);
+    const factsHtml = [
+      ['Положительные', reliabilityFacts.positive, 'good'],
+      ['Требуют внимания', reliabilityFacts.attention, 'warn'],
+      ['Негативные', reliabilityFacts.negative, 'bad'],
+    ].filter(([, items]) => items.length).map(([title, items, state]) => `
+      <div class="${state}">
+        <span>${escapeHtml(title)}</span>
+        <p>${escapeHtml(items.slice(0, 3).join('; '))}</p>
+      </div>
+    `).join('');
+    const hasStop = metrics.some((metric) => metric.state === 'bad' && /Ликвидация|Банкротство/.test(metric.label));
+    companyStagePanel.innerHTML = `
+      <div class="stage-card">
+        <div class="stage-card-grid">
+          <div><span>Название</span><p>${escapeHtml(name)}</p></div>
+          <div><span>Юр. адрес</span><p>${escapeHtml(getCompanyLegalAddress(report) || 'нет данных')}</p></div>
+          <div><span>Директор</span><p>${escapeHtml(getCompanyDirector(report) || 'нет данных')}</p></div>
+          <div><span>Город</span><p>${escapeHtml(getCompanyCity(report) || 'нет данных')}</p></div>
+          ${metrics.map((metric) => `
+            <div class="${escapeHtml(metric.state)}">
+              <span>${escapeHtml(metric.label)}</span>
+              <p>${escapeHtml(metric.value)}</p>
+            </div>
+          `).join('')}
+        </div>
+        <div class="stage-related">
+          <span>Связанные строительные компании директора/учредителей</span>
+          <p>${relatedCompanies.length ? escapeHtml(relatedCompanies.join('; ')) : 'не найдены'}</p>
+        </div>
+        ${factsHtml ? `<div class="stage-card-grid stage-facts">${factsHtml}</div>` : ''}
+        ${hasStop
+          ? '<div class="stage-actions"><button class="primary-btn" type="button" data-company-show-report>Показать отчет</button></div>'
+          : `<label class="review-keywords">
+              <span>Поисковые слова для источников</span>
+              <textarea data-company-search-queries rows="2">${escapeHtml(buildReviewSearchKeywords(report))}</textarea>
+            </label>
+            <div class="stage-actions"><button class="primary-btn" type="button" data-company-next="2">Далее</button></div>`}
+      </div>
+    `;
+    return;
+  }
+
+  if (stage === 2) {
+    companyStagePanel.hidden = true;
+    syncManualReviewPanelFromReport(report);
+  }
 }
 
 const manualReviewConfigs = [
   { value: '2gis', title: '2GIS', reportCode: '2gis_reviews' },
   { value: 'yandex', title: 'Яндекс Карты', reportCode: 'yandex_maps_reviews' },
-  { value: 'hh', title: 'HH', reportCode: 'hh_reviews' },
   { value: 'dreamjob', title: 'DreamJob', reportCode: 'dreamjob_reviews' },
   { value: 'antijob', title: 'Antijob', reportCode: 'antijob_reviews' },
-  { value: 'avito', title: 'Avito', reportCode: 'avito_reviews' },
 ];
+
+function getCompanyDisplayName(report = {}) {
+  return report?.legal_card?.name
+    || getReportSource(report, 'checko_company_card')?.collected?.name
+    || getReportSource(report, 'fns_egrul')?.collected?.name
+    || '';
+}
+
+function getCompanyShortName(report = {}) {
+  return getCompanyDisplayName(report)
+    || getReportSource(report, 'checko_company_card')?.collected?.name
+    || getReportSource(report, 'checko_company_card')?.collected?.normalized_search_name
+    || '';
+}
+
+function getCompanyFullName(report = {}) {
+  return getCompanyDisplayName(report)
+    || getReportSource(report, 'checko_company_card')?.collected?.full_name
+    || getReportSource(report, 'fns_egrul')?.collected?.name
+    || '';
+}
+
+function stripLegalForm(value = '') {
+  const quoted = extractQuotedCompanyNames(value);
+  if (quoted.length) return normalizeKeyword(quoted[0]);
+  return normalizeKeyword(value)
+    .replace(/\b(непубличное акционерное общество|общество с ограниченной ответственностью|акционерное общество|публичное акционерное общество|закрытое акционерное общество|индивидуальный предприниматель|ооо|ао|зао|пао|нао|ип)\b/gi, ' ')
+    .replace(/\b(общество|с|ограниченной|ответственностью|акционерное|непубличное|публичное|закрытое|индивидуальный|предприниматель|компания)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractQuotedCompanyNames(value = '') {
+  const text = String(value || '');
+  const names = [];
+  const quotePattern = /["«]([^"»]+)["»]?/g;
+  let match;
+  while ((match = quotePattern.exec(text))) {
+    if (match[1]?.trim()) names.push(match[1].trim());
+  }
+  return names;
+}
+
+function getCompanyLegalAddress(report = {}) {
+  return report?.legal_card?.address
+    || getReportSource(report, 'checko_company_card')?.collected?.address
+    || getReportSource(report, 'checko_company_card')?.collected?.legal_address
+    || getReportSource(report, 'fns_egrul')?.collected?.address
+    || '';
+}
+
+function getCompanyDirector(report = {}) {
+  return report?.legal_card?.director
+    || getReportSource(report, 'checko_company_card')?.collected?.director
+    || getReportSource(report, 'fns_egrul')?.collected?.director
+    || '';
+}
+
+function getCompanyCity(report = {}) {
+  const address = getCompanyLegalAddress(report);
+  const knownCities = ['Уфа', 'Челябинск', 'Москва', 'Санкт-Петербург', 'Екатеринбург', 'Новосибирск', 'Казань', 'Нижний Новгород', 'Краснодар', 'Пермь', 'Тюмень'];
+  const normalizedAddress = String(address || '').replace(/\s+/g, ' ');
+  for (const city of knownCities) {
+    const escaped = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`(?:г\\.?|город)?\\s*${escaped}(?:,|\\b)`, 'i').test(normalizedAddress)) return city;
+  }
+  const cityMatch = normalizedAddress.match(/(?:^|,\s*)(?:г\.|г\s+|город\s+)\s*(?!о\.)([^,\n]+)/i);
+  if (cityMatch) return cityMatch[1].replace(/^город\s+/i, '').trim();
+  const districtMatch = normalizedAddress.match(/г\.\s*о\.\s*(?:город\s*)?([^,\n]+)/i);
+  if (districtMatch) return districtMatch[1].replace(/^город\s+/i, '').trim();
+  const match = String(address).match(/(?:г\.|город)\s*([^,\n]+)/i);
+  return match ? match[1].replace(/^город\s+/i, '').trim() : '';
+}
+
+function getCheckoReliabilityFacts(report = {}) {
+  const collected = getReportSource(report, 'checko_company_card')?.collected || {};
+  const facts = collected.reliability_facts || {};
+  const normalize = (value) => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).filter(Boolean);
+    if (typeof value === 'object') return Object.values(value).map((item) => String(item || '').trim()).filter(Boolean);
+    return [String(value).trim()].filter(Boolean);
+  };
+  return {
+    positive: normalize(facts.positive),
+    attention: normalize(facts.attention),
+    negative: normalize(facts.negative),
+  };
+}
+
+function getCheckoBriefMetrics(report = {}) {
+  const checko = getReportSource(report, 'checko_company_card');
+  const collected = checko?.collected || {};
+  const facts = getCheckoReliabilityFacts(report);
+  const factsText = [
+    ...facts.positive,
+    ...facts.attention,
+    ...facts.negative,
+    ...asArray(report?.summary),
+  ].join(' ');
+  const liquidationSignal = /ликвид|недейств|прекращ/i.test(`${factsText} ${collected.status || ''} ${collected.liquidation_reason || ''}`);
+  const bankruptcySignal = /банкрот|федресурс/i.test(factsText);
+  const revenueYear = collected.revenue && collected.finance_year ? ` (${collected.finance_year})` : '';
+  const defendantSummary = collected.arbitration_defendant_summary || collected.defendant_summary || '';
+  const confirmedStop = /ликвид|недейств|прекращ|банкрот/i.test(`${collected.status || ''} ${collected.liquidation_reason || ''} ${collected.liquidation_date_text || ''}`);
+  const legalRiskText = liquidationSignal || bankruptcySignal
+    ? [
+      liquidationSignal ? 'есть сигнал ликвидации/статуса' : '',
+      bankruptcySignal ? 'есть сигнал банкротства' : '',
+    ].filter(Boolean).join(', ')
+    : 'нет';
+  const revenueRub = parseMoneyToRubles(collected.revenue);
+  const staffNumber = Number(String(collected.staff_count || collected.average_headcount || '').replace(/\D+/g, '') || 0);
+  const hasDefendantCases = defendantSummary && !/^0\b|0 шт/i.test(defendantSummary);
+  const enforcementText = String(collected.enforcement_proceedings_summary || '');
+  const hasEnforcement = enforcementText && !/нет сведений|отсутств/i.test(enforcementText);
+  const riskScore = Number(report?.risk_score || 0);
+  return [
+    { label: 'Ликвидация / банкротство', value: legalRiskText, state: confirmedStop ? 'bad' : liquidationSignal || bankruptcySignal ? 'warn' : 'good' },
+    { label: `Обороты${revenueYear}`, value: getRevenueDisplay(collected), state: revenueRub > 0 && revenueRub < 200_000_000 ? 'bad' : revenueRub >= 200_000_000 && revenueRub < 500_000_000 ? 'warn' : revenueRub >= 500_000_000 ? 'good' : 'warn' },
+    { label: 'Сотрудники', value: collected.staff_count || collected.average_headcount || 'нет данных', state: staffNumber > 0 && staffNumber < 10 ? 'bad' : staffNumber >= 10 && staffNumber < 50 ? 'warn' : staffNumber >= 50 ? 'good' : 'warn' },
+    { label: 'Входящие суды', value: hasEnforcement ? `${defendantSummary || 'нет'}; есть исполнительные производства` : /^0\b|0 шт/i.test(defendantSummary) ? 'нет' : defendantSummary || 'нет данных', state: hasEnforcement ? 'bad' : hasDefendantCases ? 'warn' : 'good' },
+    { label: 'Риск', value: `${riskScore >= 5 ? '?' : '✓'} ${riskScore}%`, state: riskScore >= 20 ? 'bad' : riskScore >= 5 ? 'warn' : 'good' },
+  ];
+}
+
+function getRelatedConstructionCompanies(report = {}) {
+  const collected = getReportSource(report, 'checko_company_card')?.collected || {};
+  const details = asArray(collected.related_companies_details?.all_companies || collected.related_companies_details);
+  const rows = details
+    .filter((item) => item && !item.is_current_company && item.is_construction_smr)
+    .map((item) => {
+      const parts = [
+        item.name || '',
+        item.inn ? `ИНН ${item.inn}` : '',
+        item.role === 'leader' ? 'директор' : item.role === 'founder' ? 'учредитель' : item.role || '',
+      ].filter(Boolean);
+      return parts.join(', ');
+    });
+  if (collected.successor_companies_text) rows.unshift(`Правопреемник: ${collected.successor_companies_text}`);
+  if (rows.length) return rows.slice(0, 6);
+  const text = collected.related_companies_by_person || '';
+  if (text && !/не найдены/i.test(text)) return [text];
+  return [];
+}
+
+function normalizeKeyword(value = '') {
+  return String(value).replace(/[«»"]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function buildReviewSearchKeywords(report = {}) {
+  const keywords = new Set();
+  const add = (value) => {
+    const text = normalizeKeyword(value);
+    if (text) keywords.add(text);
+  };
+  const shortName = getCompanyShortName(report);
+  const fullName = getCompanyFullName(report);
+  add(stripLegalForm(shortName));
+  add(stripLegalForm(fullName));
+  extractQuotedCompanyNames(shortName).forEach(add);
+  extractQuotedCompanyNames(fullName).forEach(add);
+  add(shortName);
+  return [...keywords].filter(Boolean).join(', ');
+}
+
+function getCompanySearchQueryText() {
+  const stageInput = companyStagePanel?.querySelector('[data-company-search-queries]');
+  const reviewInput = manualReviewSources?.querySelector('[data-review-keywords]');
+  return (stageInput?.value || reviewInput?.value || currentCompanySearchQuery || buildReviewSearchKeywords(currentCompanyReport || {})).trim();
+}
+
+function renderReviewDashboard(report = {}, rows = []) {
+  return `
+    <div class="review-dashboard" aria-label="Сводка поиска отзывов">
+      ${manualReviewConfigs.map((config) => {
+        const source = getReportSource(report, config.reportCode);
+        const sourceRows = rows.filter((row) => row.sourceValue === config.value);
+        const hasFound = sourceRows.some((row) => getSearchVariantState(row) === 'found');
+        const hasDoubt = sourceRows.some((row) => getSearchVariantState(row) === 'doubt');
+        const status = hasFound ? 'found' : hasDoubt ? 'doubt' : source ? 'missing' : 'missing';
+        return `
+          <div class="review-dashboard-item ${status}">
+            <span class="review-service-icon">${escapeHtml(config.title.slice(0, 2))}</span>
+            <span>${escapeHtml(config.title)}</span>
+            <b>${status === 'found' ? '✓' : status === 'doubt' ? '!' : '×'}</b>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
 
 function getReviewSourceUrl(report, sourceValue = '2gis') {
   const config = manualReviewConfigs.find((item) => item.value === sourceValue);
   const sourceCode = config?.reportCode || sourceValue;
   const source = getReportSource(report, sourceCode);
-  return source?.collected?.reviews_url || source?.url || '';
+  return source?.collected?.reviews_url || source?.collected?.employer_url || source?.url || '';
+}
+
+function getSearchAttemptCountText(attempt = {}, source = {}) {
+  if (isClosedMapSource(source)) return 'Больше не работает';
+  if (source.status === 'not_found') return 'Не найдено';
+  if (source.status === 'candidate_review') return 'Нужна сверка';
+  if (attempt.review_count_text) return attempt.review_count_text;
+  if (attempt.review_count) return `${attempt.review_count} отзывов`;
+  if (attempt.employer_count) return `${attempt.employer_count} работодателей`;
+  if (attempt.company_count) return `${attempt.company_count} компаний`;
+  if (attempt.vacancy_count) return `${attempt.vacancy_count} вакансий`;
+  if (attempt.count !== undefined && attempt.count !== '') return `${attempt.count} вариантов`;
+  if (attempt.error || source.status === 'not_found') return 'Не найдено';
+  return source.status === 'candidate_review' ? 'Нужна сверка' : translateStatus(source.status || 'not_started');
+}
+
+function getSearchAttemptStatusText(attempt = {}, source = {}) {
+  if (attempt.error) return 'не найдено';
+  if (attempt.status) return translateStatus(attempt.status);
+  return translateStatus(source.status || 'не начато');
+}
+
+function getSearchAttemptQuery(attempt = {}, source = {}) {
+  return attempt.query || attempt.search_query || source?.collected?.search_query || source?.collected?.searched_company_name || source?.collected?.api_query_used || source?.collected?.searched_inn || '';
+}
+
+function isClosedMapSource(source = {}) {
+  if (source?.code !== 'yandex_maps_reviews') return false;
+  const haystack = [
+    source?.status,
+    source?.collected?.page_title,
+    source?.collected?.title,
+    source?.collected?.status_text,
+    ...asArray(source?.signals).map((signal) => signal?.message || ''),
+  ].join(' ');
+  return /Permanently closed|Больше не работает|Закрыто навсегда|не работает/i.test(haystack);
+}
+
+function isSearchVariantMissing(row = {}) {
+  const countText = String(row.countText || '').toLowerCase();
+  return Boolean(row.notFound || !row.url || countText.includes('не найдено') || countText.includes('рќрµ рЅр°р№рґрµрЅрѕ'));
+}
+
+function getSearchVariantState(row = {}) {
+  const countText = String(row.countText || '').toLowerCase();
+  if (row.statusText?.includes('браузерному') || countText.includes('нужна сверка') || countText.includes('больше не работает') || countText.includes('кандидат')) return 'doubt';
+  if (isSearchVariantMissing(row)) return 'missing';
+  return row.url ? 'found' : 'missing';
+}
+
+function buildSearchVariantRows(report) {
+  const rowsByKey = new Map();
+  manualReviewConfigs.forEach((config) => {
+    const source = getReportSource(report, config.reportCode);
+    if (!source) return;
+    const attempts = asArray(source?.collected?.search_attempts).filter((item) => item && typeof item === 'object');
+    const hasUrlAttempt = attempts.some((item) => item.url);
+    const hasResolvedAttempt = attempts.some((item) => !item.error && (
+      item.url || item.title || item.review_count || item.review_count_text || item.company_count || item.vacancy_count || item.count
+    ));
+    const normalizedAttempts = attempts.length ? attempts : [{
+      query: source?.collected?.search_query || source?.collected?.api_query_used || source?.collected?.searched_company_name || source?.collected?.searched_inn || '',
+      url: source?.collected?.reviews_url || source?.collected?.employer_url || source?.url || '',
+      status: source.status,
+      review_count: source?.collected?.review_count || '',
+      review_count_text: source?.collected?.review_count_text || '',
+    }];
+    normalizedAttempts.forEach((attempt, index) => {
+      if (hasUrlAttempt && !attempt.url) return;
+      if (attempt.error && hasResolvedAttempt) return;
+      const query = getSearchAttemptQuery(attempt, source);
+      const url = attempt.error ? '' : (attempt.url || source?.collected?.reviews_url || source?.collected?.employer_url || source?.url || '');
+      const countText = getSearchAttemptCountText(attempt, source);
+      const key = url ? `${config.value}|${url}` : `${config.value}|missing|${query || index}`;
+      const existing = rowsByKey.get(key);
+      if (existing) {
+        if (query && !existing.queries.includes(query)) existing.queries.push(query);
+        if (!existing.url && url) existing.url = url;
+        if (existing.countText === 'Не найдено' && countText !== 'Не найдено') existing.countText = countText;
+        existing.notFound = isSearchVariantMissing(existing);
+        return;
+      }
+      const row = {
+        id: `${config.value}-${rowsByKey.size}`,
+        sourceValue: config.value,
+        sourceTitle: config.title,
+        queries: query ? [query] : [],
+        countText,
+        url,
+        collectable: ['ok', 'candidate_review'].includes(source.status) && Boolean(url),
+        statusText: ['ok', 'candidate_review'].includes(source.status) && url ? 'готово к браузерному сбору' : 'не найдено',
+        checked: false,
+        notFound: Boolean(attempt.error || source.status === 'not_found' || !url),
+      };
+      row.notFound = isSearchVariantMissing(row);
+      rowsByKey.set(key, row);
+    });
+  });
+  return [...rowsByKey.values()];
 }
 
 function syncManualReviewPanelFromReport(report) {
   if (!manualReviewPanel || !manualReviewSources || !report) return;
   manualReviewPanel.hidden = false;
-  manualReviewSources.innerHTML = manualReviewConfigs.map((config) => {
-    const source = getReportSource(report, config.reportCode);
-    const url = getReviewSourceUrl(report, config.value);
-    const status = url
-      ? 'Подобранная ссылка готова для сбора. Включите корректировку, если ссылка неверная.'
-      : 'Ссылка не найдена автоматически. Включите корректировку и вставьте корректную ссылку.';
-    const rating = source?.collected?.rating_text || '';
-    const reviews = source?.collected?.review_count_text || '';
-    const pickedLink = url
-      ? `<a class="secondary-btn manual-review-picked-link" href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Подобранная ссылка</a>`
-      : '<span class="manual-review-no-link">Подобранная ссылка не найдена</span>';
-    const correctionChecked = url ? '' : 'checked';
-    const correctionHidden = url ? 'hidden' : '';
-    return `
-      <div class="manual-review-source" data-review-row="${escapeHtml(config.value)}">
-        <div class="manual-review-source-head">
-          <div>
-            <h3>${escapeHtml(config.title)}</h3>
-            <p>${escapeHtml([rating, reviews].filter(Boolean).join(' · ') || status)}</p>
-          </div>
-          <label class="manual-review-correction">
-            <input type="checkbox" data-review-correction="${escapeHtml(config.value)}" ${correctionChecked} />
-            <span>Нужна корректировка</span>
-          </label>
-        </div>
-        <div class="manual-review-picked">
-          ${pickedLink}
-        </div>
-        <div class="manual-review-row" data-review-correction-row="${escapeHtml(config.value)}" ${correctionHidden}>
-          <input data-review-url="${escapeHtml(config.value)}" value="" placeholder="Вставьте корректную ссылку https://..." />
-          <button class="primary-btn" type="button" data-review-save="${escapeHtml(config.value)}">Собрать</button>
-        </div>
-        <div class="manual-review-row" data-review-default-row="${escapeHtml(config.value)}" ${url ? '' : 'hidden'}>
-          <button class="primary-btn" type="button" data-review-save="${escapeHtml(config.value)}" data-picked-url="${escapeHtml(url)}">Собрать по подобранной ссылке</button>
-        </div>
-        <p class="muted-note" data-review-status="${escapeHtml(config.value)}">${escapeHtml(status)}</p>
-      </div>
-    `;
-  }).join('');
+  const keywordText = getCompanySearchQueryText() || buildReviewSearchKeywords(report);
+  currentCompanySearchQuery = keywordText;
+  const rows = buildSearchVariantRows(report);
+  manualReviewSources.innerHTML = `
+    ${renderReviewDashboard(report, rows)}
+    <label class="review-keywords">
+      <span>Ключевые слова поиска</span>
+      <textarea data-review-keywords rows="2">${escapeHtml(keywordText)}</textarea>
+    </label>
+    <div class="search-variants-wrap">
+      <table class="search-variants-table">
+        <thead>
+          <tr>
+            <th>Источник</th>
+            <th>Ссылка</th>
+            <th>Поисковое слово</th>
+            <th>Действие</th>
+            <th>Статус сбора</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => {
+            const queryText = row.queries?.length ? row.queries.join(', ') : 'ручной поиск';
+            const variantState = getSearchVariantState(row);
+            return `
+              <tr class="search-variant-${escapeHtml(variantState)}" data-search-row="${escapeHtml(row.id)}" data-review-source="${escapeHtml(row.sourceValue)}" data-search-not-found="${isSearchVariantMissing(row) ? 'true' : 'false'}">
+                <td>${escapeHtml(row.sourceTitle)}</td>
+                <td>${row.url ? `<a href="${escapeHtml(row.url)}" target="_blank" rel="noreferrer">открыть</a>` : 'нет ссылки'}</td>
+                <td>${escapeHtml(queryText)}</td>
+                <td>
+                  ${row.url
+                    ? `<a href="#" data-search-edit="${escapeHtml(row.id)}">Актуализировать</a><a href="#" data-search-remove="${escapeHtml(row.id)}">Удалить</a>`
+                    : `<a href="#" data-search-add="${escapeHtml(row.sourceValue)}">Добавить</a>`}
+                </td>
+                <td data-search-status="${escapeHtml(row.id)}" data-review-source="${escapeHtml(row.sourceValue)}" data-review-url-value="${escapeHtml(row.url)}" data-review-collectable="${row.collectable ? 'true' : 'false'}">${escapeHtml(row.statusText || 'не начато')}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="search-variants-actions">
+      <button class="secondary-btn" type="button" data-search-remove-missing>Удалить "не найденные"</button>
+      <button class="primary-btn" type="button" data-search-start>Собрать</button>
+    </div>
+  `;
 }
 
 async function runCompanyCheckReport() {
@@ -557,24 +1010,32 @@ async function runCompanyCheckReport() {
     return;
   }
   setCompanyCheckLoading(true);
-  renderCompanyCheckProgress(0, []);
-  const progressTimer = setInterval(() => {
-    if (!companyCheckProgress || companyCheckProgress.hidden) return;
-    const active = [...companyCheckProgress.querySelectorAll('.progress-step')].findIndex((item) => item.classList.contains('active'));
-    const next = Math.min(active + 1, companyCheckSteps.length - 1);
-    renderCompanyCheckProgress(next, companyCheckSteps.slice(0, next).map((step) => step.id));
-  }, 1400);
+  setCompanyCheckFlow(1, []);
+  resetCompanyCheckLog();
+  const startedAt = Date.now();
+  let waitLogTimer = null;
+  currentCompanySearchQuery = '';
+  addCompanyCheckLog(`Начал проверку ИНН ${inn}.`);
+  addCompanyCheckLog('Отправляю запрос в локальную админку: /api/company-check.');
+  addCompanyCheckLog('Сервер запустит PowerShell-сборщик company_check.ps1. Промежуточные ответы от него пока не приходят, поэтому ждём итоговый JSON.');
+  if (companyStagePanel) companyStagePanel.hidden = true;
+  if (manualReviewPanel) manualReviewPanel.hidden = true;
   if (companyReportEmpty) {
-    companyReportEmpty.hidden = false;
-    companyReportEmpty.textContent = 'Собираю данные. Текущий этап показан выше.';
+    companyReportEmpty.hidden = true;
+    companyReportEmpty.textContent = '';
   }
   if (companyReportView) {
     companyReportView.hidden = true;
     companyReportView.innerHTML = '';
   }
   try {
+    waitLogTimer = window.setInterval(() => {
+      addCompanyCheckLog(`Проверка ещё выполняется. Ждём ответ сервера, прошло ${formatDuration(Date.now() - startedAt)}.`);
+    }, 10000);
     const response = await fetch(`${API_BASE}/api/company-check?inn=${encodeURIComponent(inn)}`);
+    addCompanyCheckLog(`Ответ от локальной админки получен через ${formatDuration(Date.now() - startedAt)}.`);
     const text = await response.text();
+    addCompanyCheckLog('Читаю ответ и разбираю JSON отчёта.');
     let payload;
     try {
       payload = JSON.parse(text);
@@ -585,23 +1046,77 @@ async function runCompanyCheckReport() {
     const report = payload.report || payload;
     currentCompanyReport = report;
     currentCompanyProfile = payload.company_profile || null;
-    renderCompanyCheckProgress(-1, getDoneCompanyCheckSteps(report, payload.saved));
-    renderCompanyReport(report, currentCompanyProfile);
-    syncManualReviewPanelFromReport(report);
-    showToast(payload.saved ? 'Отчет собран и сохранен в справочник компаний.' : `Отчет собран, но не сохранен: ${payload.save_error || 'ошибка записи справочника'}.`);
+    currentCompanySearchQuery = buildReviewSearchKeywords(report);
+    addCompanyCheckLog('Отчёт разобран. Проверяю, есть ли название компании и ключевые поля.');
+    logSourceTimings(report);
+    logFallbackDiagnostics(report);
+    renderCompanyCheckTitle(report);
+    setCompanyInnEditMode(false);
+    renderCompanyStage(1, report);
+    addCompanyCheckLog(payload.saved ? 'Отчёт сохранён в локальный справочник.' : 'Отчёт получен, но не сохранён в локальный справочник.');
+    addCompanyCheckLog('Показываю короткую карточку компании.');
+    showToast(payload.saved ? 'Компания найдена. Проверьте карточку и переходите дальше.' : `Компания найдена, но отчет не сохранен: ${payload.save_error || 'ошибка записи справочника'}.`);
   } catch (error) {
-    renderCompanyCheckProgress(-1, [], 'request');
+    setCompanyStage(1);
+    addCompanyCheckLog(`Проверка остановлена: ${error.message || 'ошибка запроса'}.`);
     if (companyReportEmpty) {
       companyReportEmpty.hidden = false;
-      companyReportEmpty.textContent = `Не удалось собрать отчет: ${error.message || 'ошибка запроса'}. Откройте http://localhost:8788/ или запустите start_admin.bat.`;
+      companyReportEmpty.textContent = `Компания не найдена или проверка не выполнена: ${error.message || 'ошибка запроса'}.`;
     }
   } finally {
-    clearInterval(progressTimer);
+    if (waitLogTimer) window.clearInterval(waitLogTimer);
     setCompanyCheckLoading(false);
   }
 }
 
-async function saveManualReviewSource(source) {
+async function loadCompanyReviewSources() {
+  const inn = digitsOnly(currentCompanyReport?.inn || adminCompanyInn?.value || '');
+  if (!inn) return;
+  const searchQuery = getCompanySearchQueryText();
+  currentCompanySearchQuery = searchQuery;
+  setCompanyCheckFlow(2, [1]);
+  if (companyStagePanel) {
+    companyStagePanel.hidden = false;
+    companyStagePanel.innerHTML = '<div class="stage-card">Ищу источники отзывов и карточки компании. Это отдельный запрос: DreamJob, Antijob, Яндекс Карты, 2GIS.</div>';
+  }
+  const startedAt = Date.now();
+  let waitLogTimer = null;
+  addCompanyCheckLog('Переходим к источникам. Отправляю запрос: /api/company-check-sources.');
+  addCompanyCheckLog(`Поисковые слова для источников: ${searchQuery || 'не указаны'}.`);
+  addCompanyCheckLog('Этот шаг может быть дольше: проверяются DreamJob, Antijob, Яндекс Карты и 2GIS.');
+  try {
+    waitLogTimer = window.setInterval(() => {
+      addCompanyCheckLog(`Поиск источников ещё выполняется, прошло ${formatDuration(Date.now() - startedAt)}.`);
+    }, 10000);
+    const response = await fetch(`${API_BASE}/api/company-check-sources?inn=${encodeURIComponent(inn)}&q=${encodeURIComponent(searchQuery)}`);
+    addCompanyCheckLog(`Ответ по источникам получен через ${formatDuration(Date.now() - startedAt)}.`);
+    const text = await response.text();
+    let payload;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      throw new Error(text || 'Сервер вернул не JSON.');
+    }
+    if (!response.ok || payload.error) throw new Error(payload.error || 'Ошибка поиска источников');
+    currentCompanyReport = payload.report || currentCompanyReport;
+    currentCompanyProfile = payload.company_profile || currentCompanyProfile;
+    logSourceTimings(currentCompanyReport);
+    logFallbackDiagnostics(currentCompanyReport);
+    logReviewSearchResults(currentCompanyReport);
+    addCompanyCheckLog('Источники разобраны. Показываю варианты поиска.');
+    renderCompanyStage(2, currentCompanyReport);
+  } catch (error) {
+    addCompanyCheckLog(`Поиск источников остановлен: ${error.message || 'ошибка запроса'}.`);
+    if (companyStagePanel) {
+      companyStagePanel.hidden = false;
+      companyStagePanel.innerHTML = `<div class="stage-card bad">Не удалось найти источники: ${escapeHtml(error.message || 'ошибка запроса')}.</div>`;
+    }
+  } finally {
+    if (waitLogTimer) window.clearInterval(waitLogTimer);
+  }
+}
+
+async function saveManualReviewSource(source, forcedUrl = '', statusSelector = '') {
   const inn = digitsOnly(adminCompanyInn?.value || currentCompanyReport?.inn || '');
   if (![10, 12, 13, 15].includes(inn.length)) {
     showToast('Сначала соберите первичный отчет по компании.');
@@ -609,10 +1124,12 @@ async function saveManualReviewSource(source) {
   }
   const urlInput = manualReviewSources?.querySelector(`[data-review-url="${CSS.escape(source)}"]`);
   const correctionInput = manualReviewSources?.querySelector(`[data-review-correction="${CSS.escape(source)}"]`);
-  const statusNode = manualReviewSources?.querySelector(`[data-review-status="${CSS.escape(source)}"]`);
+  const statusNode = statusSelector
+    ? manualReviewSources?.querySelector(statusSelector)
+    : manualReviewSources?.querySelector(`[data-review-status="${CSS.escape(source)}"]`);
   const saveButton = manualReviewSources?.querySelector(`[data-review-save="${CSS.escape(source)}"]`);
   const pickedUrl = saveButton?.dataset.pickedUrl || getReviewSourceUrl(currentCompanyReport, source);
-  const url = correctionInput?.checked ? (urlInput?.value.trim() || '') : pickedUrl;
+  const url = forcedUrl || (correctionInput?.checked ? (urlInput?.value.trim() || '') : pickedUrl);
   if (!url) {
     showToast('Укажите ссылку на страницу с отзывами.');
     urlInput?.focus();
@@ -636,16 +1153,119 @@ async function saveManualReviewSource(source) {
     if (!response.ok || payload.error) throw new Error(payload.error || 'Ошибка сохранения');
     currentCompanyProfile = payload.company_profile || currentCompanyProfile;
     currentCompanyReport = payload.report || currentCompanyProfile?.latest_report || currentCompanyReport;
-    renderCompanyReport(currentCompanyReport, currentCompanyProfile);
+    const manualSource = getReportSource(currentCompanyReport, `manual_${source}_reviews`);
+    const matchNote = manualSource?.collected?.address_match === false || manualSource?.collected?.address_match === 'False'
+      ? 'собрано, адрес не подтверждён'
+      : 'собрано';
     syncManualReviewPanelFromReport(currentCompanyReport);
-    const nextStatusNode = manualReviewSources?.querySelector(`[data-review-status="${CSS.escape(source)}"]`);
-    if (nextStatusNode) nextStatusNode.textContent = 'Отзывы собраны и сохранены.';
+    const nextStatusNode = statusSelector ? manualReviewSources?.querySelector(statusSelector) : null;
+    if (nextStatusNode) nextStatusNode.textContent = matchNote;
     showToast('Отзывы собраны и добавлены к отчету.');
   } catch (error) {
     if (statusNode) statusNode.textContent = 'Ошибка сбора.';
     showToast(error.message || 'Не удалось собрать отзывы.');
   } finally {
     if (saveButton) saveButton.disabled = false;
+  }
+}
+
+async function startSelectedSearchAnalysis() {
+  const rows = [...(manualReviewSources?.querySelectorAll('[data-search-row]') || [])]
+    .filter((row) => row.dataset.searchNotFound !== 'true')
+    .filter((row) => row.dataset.searchDeleted !== 'true')
+    .map((row) => {
+      const statusNode = row.querySelector('[data-search-status]');
+      return {
+        row,
+        rowId: row.dataset.searchRow || '',
+        source: statusNode?.dataset.reviewSource || '',
+        url: statusNode?.dataset.reviewUrlValue || '',
+        collectable: statusNode?.dataset.reviewCollectable === 'true',
+        statusNode,
+      };
+    })
+    .filter((item) => item.source && item.url && item.collectable);
+  if (!rows.length) {
+    showToast('Нет найденных источников для сбора. Добавьте ссылку или удалите лишние строки.');
+    return;
+  }
+  const startButton = manualReviewSources?.querySelector('[data-search-start]');
+  if (startButton) {
+    startButton.disabled = true;
+    startButton.textContent = 'Собираю...';
+  }
+  setCompanyCheckFlow(4, [1, 2, 3]);
+  addCompanyCheckLog(`Начинаю сбор по найденным источникам: ${rows.length}.`);
+  try {
+    for (const item of rows) {
+      const statusSelector = `[data-search-status="${CSS.escape(item.rowId)}"]`;
+      if (item.statusNode) item.statusNode.textContent = 'сбор начат';
+      const browserSource = item.source === '2gis' || item.source === 'yandex';
+      addCompanyCheckLog(`${browserSource ? 'Запускаю браузерный сбор' : 'Собираю'} ${item.source}: ${item.url}.`);
+      await saveManualReviewSource(item.source, item.url, statusSelector);
+    }
+  } finally {
+    if (startButton) {
+      startButton.disabled = false;
+      startButton.textContent = 'Собрать';
+    }
+  }
+  setCompanyCheckFlow(5, [1, 2, 3, 4]);
+  addCompanyCheckLog('Сбор по источникам завершен. Показываю итоговый отчет.');
+  if (manualReviewPanel) manualReviewPanel.hidden = true;
+  if (companyStagePanel) companyStagePanel.hidden = true;
+  renderCompanyReport(currentCompanyReport, currentCompanyProfile);
+  companyReportView?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateSearchVariantUrl(rowId, nextUrl) {
+  const row = manualReviewSources?.querySelector(`[data-search-row="${CSS.escape(rowId)}"]`);
+  if (!row) return;
+  row.dataset.searchNotFound = nextUrl ? 'false' : 'true';
+  const linkCell = row.children[1];
+  if (linkCell) {
+    linkCell.innerHTML = nextUrl ? `<a href="${escapeHtml(nextUrl)}" target="_blank" rel="noreferrer">открыть</a>` : 'нет ссылки';
+  }
+  const statusNode = row.querySelector('[data-search-status]');
+  if (statusNode) {
+    statusNode.dataset.reviewUrlValue = nextUrl;
+    statusNode.dataset.reviewCollectable = nextUrl ? 'true' : 'false';
+    statusNode.textContent = nextUrl ? 'готово к сбору' : 'не найдено';
+  }
+}
+
+function removeSearchVariant(rowId) {
+  const row = manualReviewSources?.querySelector(`[data-search-row="${CSS.escape(rowId)}"]`);
+  if (!row) return;
+  const statusNode = row.querySelector('[data-search-status]');
+  if (statusNode && !row.dataset.originalUrl) row.dataset.originalUrl = statusNode.dataset.reviewUrlValue || '';
+  row.dataset.searchDeleted = 'true';
+  row.classList.add('search-variant-deleted');
+  if (statusNode) {
+    statusNode.dataset.reviewCollectable = 'false';
+    statusNode.textContent = 'удалено';
+  }
+  const actionCell = row.children[3];
+  if (actionCell) actionCell.innerHTML = `<a href="#" data-search-restore="${escapeHtml(rowId)}">Вернуть</a>`;
+}
+
+function restoreSearchVariant(rowId) {
+  const row = manualReviewSources?.querySelector(`[data-search-row="${CSS.escape(rowId)}"]`);
+  if (!row) return;
+  const statusNode = row.querySelector('[data-search-status]');
+  row.dataset.searchDeleted = 'false';
+  row.classList.remove('search-variant-deleted');
+  const url = row.dataset.originalUrl || statusNode?.dataset.reviewUrlValue || '';
+  if (statusNode) {
+    statusNode.dataset.reviewUrlValue = url;
+    statusNode.dataset.reviewCollectable = url ? 'true' : 'false';
+    statusNode.textContent = url ? 'готово к сбору' : 'не найдено';
+  }
+  const actionCell = row.children[3];
+  if (actionCell) {
+    actionCell.innerHTML = url
+      ? `<a href="#" data-search-edit="${escapeHtml(rowId)}">Изменить</a><a href="#" data-search-remove="${escapeHtml(rowId)}">Удалить</a>`
+      : `<a href="#" data-search-add="${escapeHtml(row.dataset.reviewSource || '')}">Добавить</a>`;
   }
 }
 
@@ -692,6 +1312,129 @@ function formatMoneyValue(value) {
   const unit = units.find((item) => abs >= item.value);
   if (!unit) return `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(number)} руб.`;
   return `${new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(number / unit.value)} ${unit.label}`;
+}
+
+function parseMoneyToRubles(value) {
+  if (value === null || value === undefined || value === '') return 0;
+  const raw = String(value).toLowerCase().replace(/\s+/g, ' ').trim();
+  const match = raw.match(/-?\d+(?:[,.]\d+)?/);
+  if (!match) return 0;
+  const number = Number(match[0].replace(',', '.'));
+  if (!Number.isFinite(number)) return 0;
+  if (raw.includes('млрд')) return number * 1_000_000_000;
+  if (raw.includes('млн')) return number * 1_000_000;
+  if (raw.includes('тыс')) return number * 1_000;
+  return number;
+}
+
+function getLatestFinanceHistoryItem(checko = {}) {
+  const history = asArray(checko.finance_history);
+  if (history.length) {
+    return history
+      .filter((item) => item?.year)
+      .sort((a, b) => Number(b.year) - Number(a.year))[0] || null;
+  }
+  const parts = String(checko.finance_history_text || '').split('; ').filter(Boolean);
+  const last = parts[parts.length - 1] || '';
+  const match = last.match(/^(\d{4}):\s*выручка\s*([^,;]+(?:руб\.)?),\s*прибыль\s*([^,;]+(?:руб\.)?)/i);
+  return match ? { year: match[1], revenue: match[2], net_profit: match[3] } : null;
+}
+
+function getRevenueDisplay(checko = {}) {
+  if (checko.revenue) return `${formatMoneyValue(checko.revenue)}${checko.finance_year ? ` (${checko.finance_year})` : ''}`;
+  const latest = getLatestFinanceHistoryItem(checko);
+  if (latest?.revenue) return `не собрано за ${checko.finance_year || 'последний год'}; последняя история: ${formatMoneyValue(latest.revenue)} (${latest.year})`;
+  return 'нет данных';
+}
+
+function getTrendLabel(values = []) {
+  const numbers = values.map((value) => parseMoneyToRubles(value)).filter((value) => value > 0);
+  if (numbers.length < 2) return 'недостаточно данных';
+  const first = numbers[0];
+  const last = numbers[numbers.length - 1];
+  const drops = numbers.slice(1).filter((value, index) => value < numbers[index]).length;
+  if (last > first && drops <= 1) return 'рост';
+  if (last < first && drops >= Math.ceil((numbers.length - 1) / 2)) return 'снижение';
+  return 'нестабильно';
+}
+
+function formatLastFinanceYears(checko = {}) {
+  const items = asArray(checko.finance_history).filter((item) => item?.year).slice(-5);
+  if (!items.length) return checko.finance_history_text ? checko.finance_history_text.split('; ').slice(-5).join('; ') : 'нет данных';
+  const trend = getTrendLabel(items.map((item) => item.revenue));
+  return `${items.map((item) => `${item.year}: выручка ${item.revenue || 'нет'}, прибыль ${item.net_profit || 'нет'}`).join('; ')}. Вывод: ${trend}.`;
+}
+
+function formatLastStaffYears(checko = {}) {
+  const items = asArray(checko.staff_history).filter((item) => item?.year).slice(-5);
+  if (!items.length) return checko.staff_history_text || 'нет данных';
+  const counts = items.map((item) => String(item.staff_count || '').replace(/\D+/g, '')).filter(Boolean).map(Number);
+  const trend = counts.length >= 2 ? (counts[counts.length - 1] > counts[0] ? 'рост' : counts[counts.length - 1] < counts[0] ? 'снижение' : 'стабильно') : 'недостаточно данных';
+  return `${items.map((item) => `${item.year}: ${item.staff_count || 'нет'}, средняя зарплата ${item.average_monthly_salary || 'нет'}`).join('; ')}. Вывод: ${trend}.`;
+}
+
+function renderFinanceDynamicsTable(checko = {}) {
+  const financeItems = asArray(checko.finance_history).filter((item) => item?.year).slice(-5);
+  const staffItems = asArray(checko.staff_history).filter((item) => item?.year).slice(-5);
+  const years = [...new Set([...financeItems, ...staffItems].map((item) => String(item.year)))].sort();
+  if (!years.length) return '';
+  const financeByYear = new Map(financeItems.map((item) => [String(item.year), item]));
+  const staffByYear = new Map(staffItems.map((item) => [String(item.year), item]));
+  const revenueTrend = getTrendLabel(years.map((year) => financeByYear.get(year)?.revenue || ''));
+  const staffCounts = years.map((year) => String(staffByYear.get(year)?.staff_count || '').replace(/\D+/g, '')).filter(Boolean).map(Number);
+  const staffTrend = staffCounts.length >= 2 ? (staffCounts[staffCounts.length - 1] > staffCounts[0] ? 'рост' : staffCounts[staffCounts.length - 1] < staffCounts[0] ? 'снижение' : 'стабильно') : 'недостаточно данных';
+  return `
+    <table class="report-table compact finance-dynamics-table">
+      <thead><tr><th>Год</th><th>Выручка</th><th>Прибыль</th><th>Сотрудники</th><th>Средняя зарплата</th></tr></thead>
+      <tbody>
+        ${years.map((year) => {
+          const finance = financeByYear.get(year) || {};
+          const staff = staffByYear.get(year) || {};
+          return `<tr>
+            <td>${escapeHtml(year)}</td>
+            <td>${escapeHtml(formatMoneyValue(finance.revenue) || 'нет данных')}</td>
+            <td>${escapeHtml(formatMoneyValue(finance.net_profit) || 'нет данных')}</td>
+            <td>${escapeHtml(staff.staff_count || 'нет данных')}</td>
+            <td>${escapeHtml(staff.average_monthly_salary || 'нет данных')}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <p class="report-note">Наблюдение: выручка - ${escapeHtml(revenueTrend)}, сотрудники - ${escapeHtml(staffTrend)}.</p>
+  `;
+}
+
+function formatDefendantCasesForReport(checko = {}) {
+  const total = checko.arbitration_defendant_summary || checko.defendant_summary || '';
+  const lastYear = checko.arbitration_defendant_last_year_summary || checko.defendant_last_year_summary || '';
+  if (!total || /^0\b|0 шт/i.test(total)) return 'нет';
+  if (/количество не найдено/i.test(lastYear)) {
+    const amountMatch = String(lastYear).match(/на сумму\s+(.+)$/i);
+    return amountMatch ? `${total}; за последний год сумма исков: ${amountMatch[1]}` : total;
+  }
+  return lastYear ? `${total}; за последний год: ${lastYear}` : total;
+}
+
+function getRatioConclusion(checko = {}) {
+  const problems = [];
+  const checks = [
+    ['financial_stability_kfn', 0.2, 'КФН низкий: зависимость от заемных средств'],
+    ['financial_stability_kos', 0, 'КОС отрицательный: не хватает собственных оборотных средств'],
+    ['liquidity_ktl', 1, 'КТЛ ниже 1: слабее покрытие краткосрочных обязательств'],
+    ['liquidity_kbl', 0.7, 'КБЛ низкий: мало быстрых активов'],
+    ['liquidity_kal', 0.1, 'КАЛ низкий: мало денег для немедленных расчетов'],
+    ['profitability_rp', 0, 'РП отрицательная: продажи убыточны'],
+    ['profitability_rd', 0, 'РД отрицательная: основная деятельность убыточна'],
+    ['profitability_ra', 0, 'РА отрицательная: активы убыточны'],
+  ];
+  checks.forEach(([key, threshold, message]) => {
+    const value = parseNumericValue(String(checko[key] || '').replace('%', ''));
+    if (value !== null && value < threshold) problems.push(`${labelReportKey(key)} ${checko[key]} - ${message}`);
+  });
+  const values = ['financial_stability_kfn', 'financial_stability_kos', 'financial_stability_dnv', 'liquidity_ktl', 'liquidity_kbl', 'liquidity_kal', 'profitability_rp', 'profitability_rd', 'profitability_ra']
+    .map((key) => `${labelReportKey(key)} ${checko[key] || 'нет'}`)
+    .join('; ');
+  return problems.length ? `${values}. Отклонения: ${problems.join('; ')}.` : `${values}. Вывод: критичных отклонений по устойчивости, ликвидности и рентабельности не видно.`;
 }
 
 function parseDateOnly(value) {
@@ -763,7 +1506,11 @@ function formatReportValue(key, value) {
   if (['inn', 'ogrn', 'kpp', 'okpo', 'employer_id'].includes(key)) {
     return value === null || value === undefined || value === '' ? 'нет данных' : String(value);
   }
-  if (['revenue', 'net_profit', 'capital', 'taxes_paid', 'insurance_paid', 'tax_debt'].includes(key)) {
+  if (['staff_count', 'average_headcount'].includes(key)) {
+    const number = parseNumericValue(value);
+    return Number.isFinite(number) ? new Intl.NumberFormat('ru-RU').format(number) : compactValue(value);
+  }
+  if (['revenue', 'net_profit', 'capital', 'charter_capital', 'taxes_paid', 'insurance_paid', 'tax_debt'].includes(key)) {
     return formatMoneyValue(value);
   }
   return compactValue(value);
@@ -783,16 +1530,6 @@ function getVisibleReportSources(sources = []) {
   // TODO AI: запланировать полноценную внутреннюю историю ПлюсЗвена и вернуть ее в отчет, когда появятся реальные данные/метрики.
   const hiddenSourceCodes = new Set(['fns_egrul', 'bo_nalog', 'zakupki_rnp', 'pluszveno_internal']);
   return sources.filter((source) => !hiddenSourceCodes.has(source.code));
-}
-
-function renderFnsVerifiedLine(report) {
-  const fns = getReportSource(report, 'fns_egrul');
-  if (!fns || fns.status !== 'ok') return '';
-  return `
-    <section class="company-report-section">
-      <p class="muted">Проверена в ФНС ЕГРЮЛ/ЕГРИП: сверены ИНН, ОГРН, КПП, наименование, юридический адрес, руководитель и статус. Компания действующая.</p>
-    </section>
-  `;
 }
 
 function hasCriticalStop(report) {
@@ -824,7 +1561,8 @@ function labelReportKey(key = '') {
     revenue_change_percent: 'Динамика выручки',
     net_profit: 'Чистая прибыль',
     net_profit_change_percent: 'Динамика прибыли',
-    capital: 'Уставный капитал',
+    capital: 'Капитал по отчетности',
+    charter_capital: 'Уставной капитал',
     taxes_paid: 'Налоги',
     insurance_paid: 'Страховые взносы',
     financial_stability_kfn: 'КФН',
@@ -850,6 +1588,7 @@ function labelReportKey(key = '') {
     bank_accounts_blocking: 'Блокировки счетов',
     related_companies_note: 'Связанные компании',
     related_companies_by_person: 'Связанные компании СМР',
+    successor_companies_text: 'Правопреемник',
     employer_name: 'Работодатель',
     employer_id: 'ID работодателя',
     rating: 'Оценка',
@@ -904,7 +1643,7 @@ function getReportTableKeys(collected = {}) {
     'registration_date_text', 'staff_count', 'average_monthly_salary', 'staff_history_text',
     'finance_history_text',
     'revenue', 'revenue_change_percent', 'net_profit', 'net_profit_change_percent',
-    'capital', 'capital_change_percent', 'taxes_paid', 'insurance_paid',
+    'charter_capital', 'capital', 'capital_change_percent', 'taxes_paid', 'insurance_paid',
     'financial_stability_kfn', 'financial_stability_kos', 'financial_stability_dnv',
     'liquidity_ktl', 'liquidity_kbl', 'liquidity_kal',
     'profitability_rp', 'profitability_rd', 'profitability_ra',
@@ -913,8 +1652,9 @@ function getReportTableKeys(collected = {}) {
     'arbitration_plaintiff_last_year_summary', 'arbitration_defendant_last_year_summary',
     'plaintiff_summary', 'defendant_summary', 'plaintiff_last_year_summary', 'defendant_last_year_summary',
     'official_phone', 'official_email', 'official_site',
-    'tax_debt', 'enforcement_proceedings_summary', 'bank_accounts_blocking',
+    'tax_debt', 'enforcement_proceedings_summary',
     'related_companies_by_person',
+    'successor_companies_text',
     'employer_name', 'employer_id', 'review_count', 'review_count_text', 'rating_class',
     'page_title', 'searched_company_name', 'searched_address', 'searched_city', 'found_by_address_in_static_html',
     'source_note',
@@ -928,7 +1668,8 @@ function getReportTableKeys(collected = {}) {
     'ratio_description_rp', 'ratio_description_rd', 'ratio_description_ra',
     'normalized_search_name', 'director_person_url', 'description', 'title', 'extracted_from',
     'collection_mode', 'purpose', 'fallback_address_url', 'city_slug', 'found_by_inn_in_static_html', 'found_by_name_in_static_html', 'found_by_city_in_static_html',
-    'required_fields',
+    'found_by_address_in_static_html', 'required_fields', 'finance_year', 'search_inn', 'searched_inn', 'search_query',
+    'searched_company_name', 'searched_address', 'searched_city', 'bank_accounts_blocking',
   ]);
   return [
     ...priorityKeys.filter((key) => Object.prototype.hasOwnProperty.call(collected, key)),
@@ -955,8 +1696,9 @@ function getSourceDisplayName(source = {}) {
     manual_antijob_reviews: 'Antijob',
     manual_avito_reviews: 'Avito',
     antijob_reviews: 'Antijob',
-    hh_reviews: 'HH',
+    hh_reviews: 'HH работодатель',
     avito_reviews: 'Avito',
+    messenger_reviews: 'Опросы в мессенджерах',
   };
   return names[source.code] || source.title || source.code || '';
 }
@@ -1030,7 +1772,9 @@ function renderSourceData(collected = {}) {
     ...priorityKeys.filter((key) => Object.prototype.hasOwnProperty.call(collected, key)),
     ...Object.keys(collected).filter((key) => !priorityKeys.includes(key) && ![
       'sample_reviews', 'search_attempts', 'director_related_companies', 'financial_ratios_2025',
-      'arbitration', 'fedresurs', 'procurements', 'reliability_facts', 'timeline_events'
+      'arbitration', 'fedresurs', 'procurements', 'reliability_facts', 'timeline_events',
+      'finance_year', 'search_inn', 'searched_inn', 'search_query', 'searched_company_name',
+      'searched_address', 'searched_city', 'bank_accounts_blocking'
     ].includes(key)),
   ].slice(0, 28);
   if (!keys.length) return '';
@@ -1089,61 +1833,287 @@ function renderCollectedReviewsSection(sources = []) {
   `;
 }
 
+function getAllCollectedReviewItems(sources = []) {
+  return sources.flatMap((source) => asArray(source?.collected?.sample_reviews).map((review) => ({
+    ...review,
+    source: getSourceDisplayName(source),
+  }))).filter((review) => review && review.text);
+}
+
+const employmentReviewCategories = [
+  ['Оплата труда и деньги', ['не платят зарплату', 'зарплату задерживают', 'кидают на зарплату', 'не рассчитали при увольнении', 'удерживают из зарплаты', 'режут зарплату', 'обещали одно платят другое', 'зарплата ниже обещанной', 'платят копейки', 'зарплата в конверте', 'серая зарплата', 'черная зарплата', 'переработки не оплачивают', 'выходные не оплачивают', 'праздники не оплачивают', 'не платят больничный']],
+  ['Штрафы, удержания, простои', ['штрафы без причины', 'штрафуют за любую мелочь', 'штрафы из ниоткуда', 'удерживают деньги без согласия', 'удерживают за инструмент', 'удерживают за брак', 'заставляют платить за спецодежду', 'простой по вине начальства', 'простой за свой счет', 'простой не оплачивают']],
+  ['Оформление и серые схемы', ['работа без оформления', 'не оформляют официально', 'без трудового договора', 'договор не показывают', 'в бумагах одно по факту другое', 'заставляют подписывать задним числом', 'нет записи в трудовой', 'официально минималка остальное в конверте', 'нет больничных и отпуска', 'фирма-однодневка', 'постоянно меняют название фирмы']],
+  ['График и переработки', ['работаем с утра до ночи', '12 часов без доплат', 'постоянные переработки', 'переработки не оплачиваются', 'заставляют работать в выходные', 'работа без выходных', 'смены без перерыва', 'нет нормального обеда', 'график все время меняется', 'график ставят как хотят', 'отпуск не дают', 'отпуск только за свой счет']],
+  ['Условия труда и безопасность', ['очень тяжелые условия', 'работа на улице в мороз', 'работа на улице в жару', 'нет нормальных бытовок', 'живем в ужасных условиях', 'грязь и бардак в общежитии', 'нет душа', 'спецодежду не выдают', 'спецодежда за свой счет', 'средства защиты не выдают', 'инструмент старый и опасный', 'работа на высоте без страховки', 'опасная работа', 'техника безопасности отсутствует', 'инструктаж для галочки', 'травмы скрывают', 'несчастные случаи не оформляют']],
+  ['Отношение начальства', ['неадекватное начальство', 'начальство орет', 'мат и крики', 'хамство начальства', 'хамское отношение', 'кумовство', 'неравенство в зарплатах', 'распределение премий', 'премий по принципу', 'полностью отбивают мотивацию', 'обращаются как с рабами', 'давят морально', 'угрожают увольнением', 'угрожают не заплатить', 'заставляют писать по собственному', 'к людям нет уважения', 'на людей наплевать', 'из-за начальства большая текучка', 'обманывают по условиям', 'жалобы игнорируют']],
+  ['Эксплуатация и давление', ['жесткая эксплуатация', 'эксплуатируют мигрантов', 'работа нелегально', 'паспорт забирают', 'документы забирают', 'угрожают полицией', 'угрожают депортацией', 'завышенные нормы', 'заставляют работать за двоих', 'не отпускают к врачу', 'не отпускают домой']],
+  ['Организация работ', ['полный бардак на объекте', 'бардак в организации работ', 'стройка без порядка', 'вечный аврал', 'планирования нет', 'постоянно меняют задания', 'нет материалов для работы', 'простой по их вине', 'за простой не платят', 'сроки нереальные', 'крайними делают рабочих']],
+  ['Документы и увольнение', ['про правила в компании не говорят', 'про оплату нигде не написано', 'премии как захотят', 'премию могут отобрать', 'премией шантажируют', 'бумаги задним числом', 'заставляют писать по собственному', 'увольняют по статье без причины', 'трудовую не отдают', 'документы не отдают']],
+  ['Репутационные звоночки', ['шарашкина контора', 'черный работодатель', 'об этой фирме плохие отзывы', 'бегите пока не поздно', 'не советую туда идти', 'сплошной обман', 'развод на зарплату', 'людей используют и выбрасывают', 'огромная текучка', 'никто долго не держится', 'все нормальные быстро уходят', 'вечно идет набор', 'объявления висят постоянно']],
+];
+
+function analyzeReviewCategories(sources = []) {
+  const reviews = getAllCollectedReviewItems(sources);
+  return employmentReviewCategories.map(([name, phrases]) => {
+    const matches = [];
+    reviews.forEach((review) => {
+      const text = String(review.text || '').toLowerCase();
+      const found = phrases.filter((phrase) => text.includes(phrase));
+      if (found.length) matches.push({ source: review.source, phrases: found });
+    });
+    return { name, count: matches.length, sources: [...new Set(matches.map((item) => item.source))] };
+  });
+}
+
+const positiveReviewCategories = [
+  ['Своевременная оплата', ['зарплата вовремя', 'своевременная оплата', 'зарплата в установленные сроки', 'стабильная заработная плата']],
+  ['Условия и быт', ['хорошие условия труда', 'условия проживания', 'столовая', 'общежит']],
+  ['Руководство и коллектив', ['понимающее руководство', 'уважительное отношение', 'небольшой коллектив', 'хороший коллектив']],
+  ['Рост и стабильность', ['возможность развиваться', 'карьера', 'стабильность', 'перспективы']],
+];
+
+function analyzePositiveReviewCategories(sources = []) {
+  const reviews = getAllCollectedReviewItems(sources);
+  return positiveReviewCategories.map(([name, phrases]) => {
+    const count = reviews.filter((review) => {
+      const text = String(review.text || '').toLowerCase();
+      return phrases.some((phrase) => text.includes(phrase));
+    }).length;
+    return { name, count };
+  });
+}
+
+function buildEmploymentRecommendation(report = {}, sources = []) {
+  const checko = getReportSource(report, 'checko_company_card')?.collected || {};
+  const flags = [];
+  const positives = [];
+  const latestFinance = getLatestFinanceHistoryItem(checko);
+  const revenueValue = checko.revenue || latestFinance?.revenue || '';
+  const profitValue = checko.net_profit || latestFinance?.net_profit || '';
+  const revenue = parseMoneyToRubles(revenueValue);
+  const taxes = parseMoneyToRubles(checko.taxes_paid);
+  const netProfit = parseMoneyToRubles(profitValue);
+  const charterCapital = parseMoneyToRubles(checko.charter_capital);
+  const age = Number((String(checko.market_age_text || '').match(/\d+/) || [])[0] || 0);
+  const taxShare = revenue > 0 && taxes > 0 ? Math.round((taxes / revenue) * 100) : null;
+  const reliabilityFacts = getCheckoReliabilityFacts(report);
+  const factsText = [...reliabilityFacts.attention, ...reliabilityFacts.negative].join(' ');
+  if (/ликвид|недейств|прекращ/i.test(`${checko.status} ${checko.liquidation_reason} ${checko.liquidation_date_text}`)) flags.push(`Стоп-фактор: статус Checko/FНС указывает на ликвидацию или недействующее состояние (${checko.status || 'статус не указан'}).`);
+  if (/банкрот|Федресурс/i.test(`${asArray(report.summary).join(' ')} ${factsText}`)) flags.push('Стоп-фактор: найден сигнал банкротства/Федресурса.');
+  if (/ФССП|исполнительн|задолж/i.test(factsText)) flags.push('Есть негативный факт по ФССП или задолженности.');
+  if (/отрицательн.*денежн.*поток/i.test(factsText)) flags.push('Отрицательный операционный денежный поток: риск кассовых разрывов и задержек выплат.');
+  if (revenue > 0 && revenue < 500_000_000) flags.push(`Выручка ниже 500 млн руб.: ${formatMoneyValue(revenueValue)} (${checko.revenue ? checko.finance_year || 'год не указан' : latestFinance?.year || 'история'}). Это риск устойчивости фонда оплаты труда.`);
+  if (revenue >= 500_000_000) positives.push(`Выручка выше порога 500 млн руб.: ${formatMoneyValue(revenueValue)} за ${checko.revenue ? checko.finance_year || 'последний доступный год' : latestFinance?.year || 'историю'}.`);
+  if (netProfit <= 0) flags.push(`Прибыль отсутствует или отрицательная: ${formatMoneyValue(profitValue)}. Это риск задержек зарплаты при кассовых разрывах.`);
+  if (netProfit > 0) positives.push(`Компания прибыльная: ${formatMoneyValue(profitValue)}${checko.finance_year ? ` (${checko.finance_year})` : ''}.`);
+  if (charterCapital > 0 && charterCapital <= 100_000) flags.push(`Уставной капитал низкий: ${formatMoneyValue(checko.charter_capital)}.`);
+  if (age && age < 5) flags.push(`Компания на рынке менее 5 лет: ${checko.market_age_text}.`);
+  if (age >= 5) positives.push(`Возраст компании не менее 5 лет: ${checko.market_age_text || 'подтвержден по дате регистрации'}.`);
+  if (taxShare !== null && taxShare < 20) flags.push(`Доля налогов к выручке ниже 20%: около ${taxShare}%. Нужна проверка структуры налогов и нагрузки.`);
+  if (taxShare !== null && taxShare >= 20) positives.push(`Налоговая нагрузка выглядит достаточной: около ${taxShare}% от выручки.`);
+  if (/отсутств/i.test(checko.procurements_summary || '')) flags.push('Госзакупки не найдены: нет дополнительного признака проверки заказчиками/государством.');
+  else if (checko.procurements_summary) positives.push('Есть сведения по госзакупкам: это плюс к проверяемости компании.');
+  if (!/не входит|отсутств/i.test(checko.bad_faith_supplier_registry || '') && checko.bad_faith_supplier_registry) flags.push(`РНП: ${checko.bad_faith_supplier_registry}.`);
+  if (checko.arbitration_defendant_summary && !/^0\b|0 шт/i.test(checko.arbitration_defendant_summary)) flags.push(`Суды как ответчик: ${formatDefendantCasesForReport(checko)}. Нужно проверить предмет споров, особенно трудовые.`);
+  const ratioWarnings = [
+    ['financial_stability_kfn', 0.2, 'КФН низкий: компания сильнее зависит от заемных средств. Это повышает риск кассовых разрывов и задержек зарплаты.'],
+    ['financial_stability_kos', 0, 'КОС отрицательный: собственных оборотных средств недостаточно, устойчивость слабее.'],
+    ['liquidity_ktl', 1, 'КТЛ ниже 1: текущих активов может не хватать для покрытия краткосрочных обязательств.'],
+    ['liquidity_kbl', 0.7, 'КБЛ низкий: быстрых ликвидных активов мало для срочных платежей.'],
+    ['liquidity_kal', 0.1, 'КАЛ низкий: мало денежных средств для немедленных расчетов.'],
+    ['profitability_rp', 0, 'РП отрицательная: продажи убыточны.'],
+    ['profitability_rd', 0, 'РД отрицательная: основная деятельность убыточна.'],
+    ['profitability_ra', 0, 'РА отрицательная: активы не генерируют прибыль.'],
+  ];
+  let ratioProblemCount = 0;
+  ratioWarnings.forEach(([key, threshold, message]) => {
+    const value = parseNumericValue(String(checko[key] || '').replace('%', ''));
+    if (value !== null && value < threshold) {
+      ratioProblemCount += 1;
+      flags.push(`${labelReportKey(key)} ${checko[key]}: ${message}`);
+    }
+  });
+  if (ratioProblemCount === 0 && ['financial_stability_kfn', 'financial_stability_kos', 'liquidity_ktl', 'liquidity_kbl', 'liquidity_kal', 'profitability_rp', 'profitability_rd', 'profitability_ra'].some((key) => checko[key])) {
+    positives.push('Ключевые коэффициенты стабильности, ликвидности и рентабельности без критичных отклонений.');
+  }
+  if (checko.finance_history_text) positives.push(`Динамика за 5 лет: ${checko.finance_history_text.split('; ').slice(-5).join('; ')}.`);
+  const related = getRelatedConstructionCompanies(report);
+  if (related.length) positives.push(`Связанные строительные компании по директору/учредителям: ${related.join('; ')}.`);
+  const sourceNotes = sources
+    .filter((source) => ['yandex_maps_reviews', '2gis_reviews', 'dreamjob_reviews', 'antijob_reviews'].includes(source.code))
+    .map((source) => `${getSourceDisplayName(source)}: ${translateStatus(source.status)}${source.url ? `, ${source.url}` : ''}`);
+  if (sourceNotes.length) positives.push(`Проверенные источники отзывов: ${sourceNotes.join('; ')}.`);
+  const reviewStats = analyzeReviewCategories(sources);
+  const positiveStats = analyzePositiveReviewCategories(sources);
+  const reviewFlagCount = reviewStats.reduce((sum, item) => sum + item.count, 0);
+  if (reviewFlagCount > 0) flags.push(`В отзывах найдено ${reviewFlagCount} совпадений по трудовым редфлагам.`);
+  const decision = flags.some((item) => /Стоп-фактор|ликвидац|банкрот/i.test(item))
+    ? 'Не рекомендовать без ручной проверки документов и актуального статуса.'
+    : flags.length >= 4
+      ? 'Компания требует осторожности: перед трудоустройством нужно отдельно проверить условия оплаты, график и устойчивость работодателя.'
+      : 'Критичных стоп-факторов по компании не видно; можно рассматривать как работодателя после проверки конкретных условий вакансии.';
+  return { decision, flags, positives, reviewStats, positiveStats };
+}
+
+function renderEmploymentRecommendation(report = {}, sources = []) {
+  const analysis = buildEmploymentRecommendation(report, sources);
+  return `
+    <section class="company-report-section employment-summary">
+      <h3>Вывод</h3>
+      <p>${escapeHtml(analysis.decision)}</p>
+      <div class="employment-columns">
+        <div>
+          <h4>Редфлаги</h4>
+          <ul class="report-list">${(analysis.flags.length ? analysis.flags : ['Критичные редфлаги по собранным данным не найдены.']).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+        </div>
+        <div>
+          <h4>Подтверждающие факторы</h4>
+          <ul class="report-list">${analysis.positives.slice(0, 12).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+        </div>
+      </div>
+      <h4>Отзывы по трудовым категориям</h4>
+      <table class="report-table compact">
+        <tbody>
+          ${analysis.reviewStats.map((item) => `
+            <tr>
+              <td>${escapeHtml(item.name)}</td>
+              <td>${item.count ? `${escapeHtml(item.count)} совпадений` : 'не найдено'}</td>
+              <td>${escapeHtml(item.sources.join(', ') || 'источники без совпадений')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </section>
+  `;
+}
+
+function renderBriefCompanySection(report = {}) {
+  const checko = getReportSource(report, 'checko_company_card')?.collected || {};
+  const metrics = getCheckoBriefMetrics(report);
+  const fullNameNoForm = stripLegalForm(getCompanyFullName(report));
+  return `
+    <section class="company-report-section">
+      <h3>Краткая карточка</h3>
+      <div class="source-data-grid">
+        <div><span>Краткое название</span><strong>${escapeHtml(getCompanyShortName(report) || getCompanyDisplayName(report) || 'нет данных')}</strong></div>
+        <div><span>Полное без юр. формы</span><strong>${escapeHtml(fullNameNoForm || 'нет данных')}</strong></div>
+        <div><span>Город</span><strong>${escapeHtml(getCompanyCity(report) || 'нет данных')}</strong></div>
+        <div><span>Юр. адрес</span><strong>${escapeHtml(getCompanyLegalAddress(report) || 'нет данных')}</strong></div>
+        <div><span>Директор</span><strong>${escapeHtml(getCompanyDirector(report) || 'нет данных')}</strong></div>
+        ${metrics.slice(0, 1).map((metric) => `<div><span>${escapeHtml(metric.label)}</span><strong>${escapeHtml(metric.value)}</strong></div>`).join('')}
+        <div><span>Связанные компании</span><strong>${escapeHtml(getRelatedConstructionCompanies(report).join('; ') || 'не найдены')}</strong></div>
+      </div>
+    </section>
+  `;
+}
+
+function renderFinancialSection(report = {}) {
+  const checko = getReportSource(report, 'checko_company_card')?.collected || {};
+  const rows = [
+    ['Уставной капитал', formatMoneyValue(checko.charter_capital)],
+    ['Капитал по отчетности', formatMoneyValue(checko.capital)],
+    ['Сотрудники', formatReportValue('staff_count', checko.staff_count)],
+  ];
+  const analysis = buildEmploymentRecommendation(report, asArray(report.sources));
+  return `
+    <section class="company-report-section">
+      <h3>Ключевые показатели компании</h3>
+      <table class="report-table compact"><tbody>
+        ${rows.map(([label, value]) => `<tr><td>${escapeHtml(label)}</td><td>${escapeHtml(value || 'нет данных')}</td></tr>`).join('')}
+      </tbody></table>
+      ${renderFinanceDynamicsTable(checko)}
+      <ul class="report-list">${analysis.flags.filter((item) => /выручк|прибыл|капитал|актив|налог|КФН|КОС|ДНВ|КТЛ|КБЛ|КАЛ|РП|РД|РА|возраст|рынке/i.test(item)).map((item) => `<li>${escapeHtml(item)}</li>`).join('') || '<li>По собранным финансовым данным критичных замечаний не найдено.</li>'}</ul>
+    </section>
+  `;
+}
+
+function renderGovernmentChecksSection(report = {}) {
+  const checko = getReportSource(report, 'checko_company_card')?.collected || {};
+  const reliabilityFacts = getCheckoReliabilityFacts(report);
+  const factsText = [...reliabilityFacts.attention, ...reliabilityFacts.negative].join(' ');
+  const hasBankruptcy = /банкрот|Федресурс/i.test(`${asArray(report.summary).join(' ')} ${factsText}`);
+  const fedresurs = hasBankruptcy
+    ? [checko.fedresurs?.mentions, checko.fedresurs?.published_messages].filter(Boolean).join(', ')
+    : 'нет актуального стоп-сигнала';
+  const rows = [
+    ['Госзакупки', checko.procurements_summary || 'нет данных'],
+    ['РНП', checko.bad_faith_supplier_registry || 'нет данных'],
+    ['Суды как ответчик', formatDefendantCasesForReport(checko)],
+    ['Исполнительные производства', checko.enforcement_proceedings_summary || 'нет данных'],
+    ['Федресурс', fedresurs || 'нет данных'],
+    ['Checko: требуют внимания', reliabilityFacts.attention.join('; ') || 'нет'],
+    ['Checko: негативные факты', reliabilityFacts.negative.join('; ') || 'нет'],
+    ['Checko: положительные факты', reliabilityFacts.positive.join('; ') || 'нет'],
+  ];
+  return `
+    <section class="company-report-section">
+      <h3>Проверки государством</h3>
+      <table class="report-table compact"><tbody>
+        ${rows.map(([label, value]) => `<tr><td>${escapeHtml(label)}</td><td>${escapeHtml(value)}</td></tr>`).join('')}
+      </tbody></table>
+    </section>
+  `;
+}
+
+function renderWorkReviewsReportSection(report = {}, sources = []) {
+  const reviewStats = analyzeReviewCategories(sources);
+  const positiveStats = analyzePositiveReviewCategories(sources);
+  const manualBaseCodes = new Set(
+    sources
+      .filter((source) => source.code?.startsWith('manual_'))
+      .map((source) => source.code.replace(/^manual_/, ''))
+  );
+  const reviewSources = sources.filter((source) => {
+    if (!/reviews/.test(source.code)) return false;
+    if (!source.code?.startsWith('manual_') && manualBaseCodes.has(source.code)) return false;
+    return true;
+  });
+  const ratingRows = reviewSources
+    .filter((source) => source.collected?.rating_text || source.collected?.rating_count_text || source.collected?.review_count_text)
+    .map((source) => `${getSourceDisplayName(source)}: ${[source.collected?.rating_text, source.collected?.rating_count_text, source.collected?.review_count_text].filter(Boolean).join(', ')}`);
+  const formatReviewSourceDetails = (source) => {
+    const collected = source.collected || {};
+    const parts = [collected.review_count_text || collected.source_note || source.url || 'нет данных'];
+    if (collected.name_match !== undefined || collected.address_match !== undefined) {
+      parts.push(`сверка: название ${collected.name_match ? '✓' : '?'}, город ${collected.city_match ? '✓' : '?'}, улица ${collected.street_match ? '✓' : '?'}, дом ${collected.house_match ? '✓' : '?'}`);
+    }
+    return parts.join('; ');
+  };
+  return `
+    <section class="company-report-section">
+      <h3>Отзывы о работе в компании</h3>
+      ${ratingRows.length ? `<p>${escapeHtml(ratingRows.join('; '))}</p>` : ''}
+      <table class="report-table compact"><tbody>
+        ${reviewSources.map((source) => `<tr><td>${escapeHtml(getSourceDisplayName(source))}</td><td>${escapeHtml(translateStatus(source.status))}</td><td>${escapeHtml(formatReviewSourceDetails(source))}</td></tr>`).join('')}
+      </tbody></table>
+      <h4>Статистика по трудовым редфлагам</h4>
+      <table class="report-table compact"><tbody>
+        ${reviewStats.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${item.count ? `${escapeHtml(item.count)} совпадений` : 'не найдено'}</td><td>${escapeHtml(item.sources.join(', ') || '')}</td></tr>`).join('')}
+      </tbody></table>
+      <h4>Плюсы в отзывах</h4>
+      <table class="report-table compact"><tbody>
+        ${positiveStats.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${item.count ? `${escapeHtml(item.count)} упоминаний` : 'не найдено'}</td></tr>`).join('')}
+      </tbody></table>
+      ${renderCollectedReviewsSection(sources)}
+    </section>
+  `;
+}
+
 function renderCompanyReport(report, companyProfile = null) {
   if (!companyReportView || !companyReportEmpty) return;
   const sources = asArray(report.sources);
   const visibleSources = getVisibleReportSources(sources);
-  const checko = getReportSource(report, 'checko_company_card');
-  const dreamjob = getReportSource(report, 'dreamjob_reviews');
   const criticalStop = hasCriticalStop(report);
-  const reportTitle = getReportCompanyName(report, checko);
-  // TODO: build a factual summary engine from normalized source signals instead of rendering generic source-status lines.
   companyReportEmpty.hidden = true;
   companyReportView.hidden = false;
-  if (criticalStop) {
-    companyReportView.innerHTML = `
-      <section class="company-report-section">
-        <h3>${escapeHtml(reportTitle)}</h3>
-        <p class="muted">Отчет по идентификатору ${escapeHtml(report.inn || '')}</p>
-      </section>
-      <div class="company-report-summary">
-        <div class="report-metric"><span>Идентификатор</span><strong>${escapeHtml(report.inn || '')}</strong></div>
-        <div class="report-metric"><span>Риск</span><strong>${escapeHtml(report.risk_score ?? 0)}/100</strong></div>
-        <div class="report-metric"><span>Проверка</span><strong>остановлена</strong></div>
-      </div>
-      <section class="company-report-section">
-        <h3>Проверку можно прекратить</h3>
-        <ul class="report-list">
-          ${(report.summary || ['Компания имеет критический статус.']).map((item) => `<li>${escapeHtml(translateSummary(item))}</li>`).join('')}
-        </ul>
-      </section>
-      <section class="company-report-section">
-        <h3>Данные проверки</h3>
-        ${renderReportTable(visibleSources)}
-      </section>
-      ${renderCollectedReviewsSection(visibleSources)}
-      ${companyProfile ? `<p class="muted registry-footnote">Справочник: проверок в локальной истории: ${escapeHtml(companyProfile.reports?.length || 0)}.</p>` : ''}
-    `;
-    return;
-  }
   companyReportView.innerHTML = `
-    <section class="company-report-section">
-      <h3>${escapeHtml(reportTitle)}</h3>
-      <p class="muted">Отчет по идентификатору ${escapeHtml(report.inn || '')}</p>
-    </section>
-    <div class="company-report-summary">
-      <div class="report-metric"><span>Идентификатор</span><strong>${escapeHtml(report.inn || '')}</strong></div>
-      <div class="report-metric"><span>Риск</span><strong>${escapeHtml(report.risk_score ?? 0)}/100</strong></div>
-      <div class="report-metric"><span>Проверок</span><strong>${sources.length}</strong></div>
-    </div>
-
-    ${renderFnsVerifiedLine(report)}
-
-    <section class="company-report-section">
-      <h3>Отчет</h3>
-      ${renderReportTable(visibleSources)}
-    </section>
-    ${renderCollectedReviewsSection(visibleSources)}
+    ${criticalStop ? `<section class="company-report-section"><h3>Стоп-сигналы</h3><ul class="report-list">${(report.summary || []).map((item) => `<li>${escapeHtml(translateSummary(item))}</li>`).join('')}</ul></section>` : ''}
+    ${renderBriefCompanySection(report)}
+    ${renderEmploymentRecommendation(report, visibleSources)}
+    ${renderFinancialSection(report)}
+    ${renderGovernmentChecksSection(report)}
+    ${renderWorkReviewsReportSection(report, visibleSources)}
     ${companyProfile ? `
       <p class="muted registry-footnote">
         Справочник: добавлена ${escapeHtml(formatDateTime(companyProfile.created_at))}, обновлена ${escapeHtml(formatDateTime(companyProfile.updated_at))}, проверок в локальной истории: ${escapeHtml(companyProfile.reports?.length || 0)}.
@@ -1477,7 +2447,65 @@ adminCompanyInn?.addEventListener('keydown', (event) => {
   }
 });
 runCompanyCheck?.addEventListener('click', runCompanyCheckReport);
+editCompanyInn?.addEventListener('click', () => {
+  setCompanyInnEditMode(true);
+});
+companyStagePanel?.addEventListener('click', (event) => {
+  const reportButton = event.target.closest('[data-company-show-report]');
+  if (reportButton) {
+    renderCompanyReport(currentCompanyReport, currentCompanyProfile);
+    return;
+  }
+  const nextButton = event.target.closest('[data-company-next]');
+  if (!nextButton) return;
+  const nextStage = Number(nextButton.dataset.companyNext || 1);
+  if (nextStage === 2) {
+    loadCompanyReviewSources();
+    return;
+  }
+  renderCompanyStage(nextStage, currentCompanyReport);
+});
 manualReviewSources?.addEventListener('click', (event) => {
+  const startButton = event.target.closest('[data-search-start]');
+  if (startButton) {
+    startSelectedSearchAnalysis();
+    return;
+  }
+  const removeMissingButton = event.target.closest('[data-search-remove-missing]');
+  if (removeMissingButton) {
+    manualReviewSources.querySelectorAll('[data-search-row][data-search-not-found="true"]').forEach((row) => row.remove());
+    return;
+  }
+  const editButton = event.target.closest('[data-search-edit]');
+  if (editButton) {
+    event.preventDefault();
+    const rowId = editButton.dataset.searchEdit || '';
+    const current = manualReviewSources.querySelector(`[data-search-status="${CSS.escape(rowId)}"]`)?.dataset.reviewUrlValue || '';
+    const next = window.prompt('Ссылка для сбора', current);
+    if (next !== null) updateSearchVariantUrl(rowId, next.trim());
+    return;
+  }
+  const removeButton = event.target.closest('[data-search-remove]');
+  if (removeButton) {
+    event.preventDefault();
+    removeSearchVariant(removeButton.dataset.searchRemove || '');
+    return;
+  }
+  const restoreButton = event.target.closest('[data-search-restore]');
+  if (restoreButton) {
+    event.preventDefault();
+    restoreSearchVariant(restoreButton.dataset.searchRestore || '');
+    return;
+  }
+  const addButton = event.target.closest('[data-search-add]');
+  if (addButton) {
+    event.preventDefault();
+    const next = window.prompt('Вставьте ссылку для сбора');
+    if (!next) return;
+    const row = addButton.closest('[data-search-row]');
+    updateSearchVariantUrl(row?.dataset.searchRow || '', next.trim());
+    return;
+  }
   const button = event.target.closest('[data-review-save]');
   if (!button) return;
   saveManualReviewSource(button.dataset.reviewSave || '');
@@ -1516,8 +2544,9 @@ companyReportFile?.addEventListener('change', () => {
       const report = JSON.parse(String(reader.result || '{}'));
       currentCompanyReport = report;
       currentCompanyProfile = null;
-      renderCompanyReport(report);
-      syncManualReviewPanelFromReport(report);
+      renderCompanyCheckTitle(report);
+      setCompanyInnEditMode(false);
+      renderCompanyStage(1, report);
       if (adminCompanyInn && report.inn) {
         adminCompanyInn.value = report.inn;
         updateCompanyCheckCommand();

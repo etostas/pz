@@ -340,41 +340,33 @@
         </article>
       </section>
       <section class="page" data-page="admin">
-        <div class="page-head">
-          <div>
-            <p class="eyebrow">Интерфейс администратора</p>
-            <h1>Управление</h1>
-          </div>
-          <button class="secondary-btn" type="button" data-route="vacancies">К вакансиям</button>
-        </div>
         <div class="parser-grid">
           <article class="panel-card parser-preview company-check-admin">
-            <div class="admin-section-head">
-              <div>
-                <p class="eyebrow">Проверка компании</p>
-                <h2>Автоматический отчет по ИНН</h2>
+            <div class="company-check-flow" id="companyCheckFlow" aria-label="Логика проверки компании">
+              <span data-flow-step="1" class="active">1. ИНН</span>
+              <span data-flow-step="2">2. Источники</span>
+              <span data-flow-step="3">3. Поиск</span>
+              <span data-flow-step="4">4. Отзывы</span>
+              <span data-flow-step="5">5. Отчет</span>
+            </div>
+            <div class="company-check-title-row">
+              <div class="company-check-title" id="companyCheckTitle" hidden></div>
+              <div class="company-inn-summary" id="companyInnSummary" hidden>
+                <button class="text-link-btn" type="button" id="editCompanyInn">Изменить ИНН</button>
               </div>
-              <span class="status-pill">ИА</span>
             </div>
             <div class="company-check-controls">
-              <label for="adminCompanyInn">ИНН / ОГРН / ОГРНИП</label>
-              <div class="inline-field">
-                <input id="adminCompanyInn" inputmode="numeric" placeholder="7453330144" />
-                <button class="primary-btn" type="button" id="runCompanyCheck">Собрать отчет</button>
-              </div>
-              <p class="muted-note" id="companyCheckHint">Сбор запускается локальным сервером админки. Источники без API проверяются через HTML-страницы и открытые endpoint сайтов.</p>
-              <div class="check-progress" id="companyCheckProgress" hidden></div>
-            </div>
-            <div class="company-report-empty" id="companyReportEmpty">
-              Введите ИНН, ОГРН или ОГРНИП и запустите сбор, чтобы увидеть юридические данные, финансы, персонал, источники и отзывы.
-            </div>
-            <div class="manual-review-panel" id="manualReviewPanel" hidden>
-              <div class="admin-section-head">
-                <div>
-                  <p class="eyebrow">Ручной этап</p>
-                  <h2>Добавить отзывы после первичной проверки</h2>
+              <div class="company-inn-editor" id="companyInnEditor">
+                <div class="inline-field">
+                  <input id="adminCompanyInn" inputmode="numeric" placeholder="ИНН компании" />
+                  <button class="primary-btn" type="button" id="runCompanyCheck">Проверить</button>
                 </div>
               </div>
+            </div>
+            <div class="company-check-log" id="companyCheckLog" hidden></div>
+            <div class="company-report-empty" id="companyReportEmpty" hidden></div>
+            <div class="company-stage-panel" id="companyStagePanel" hidden></div>
+            <div class="manual-review-panel" id="manualReviewPanel" hidden>
               <div class="manual-review-sources" id="manualReviewSources"></div>
             </div>
             <div class="company-report" id="companyReportView" hidden></div>

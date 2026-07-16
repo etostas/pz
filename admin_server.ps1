@@ -81,10 +81,16 @@ function Read-HttpRequest {
   $headerEnd = $requestText.IndexOf("`r`n`r`n")
   $headersText = if ($headerEnd -ge 0) { $requestText.Substring(0, $headerEnd) } else { $requestText }
   $contentLength = 0
+  $headers = @{}
   foreach ($line in ($headersText -split "`r`n" | Select-Object -Skip 1)) {
     $headerPair = $line -split ":", 2
-    if ($headerPair.Count -eq 2 -and $headerPair[0].Trim().Equals("Content-Length", [System.StringComparison]::OrdinalIgnoreCase)) {
-      [int]::TryParse($headerPair[1].Trim(), [ref]$contentLength) | Out-Null
+    if ($headerPair.Count -eq 2) {
+      $headerName = $headerPair[0].Trim().ToLowerInvariant()
+      $headerValue = $headerPair[1].Trim()
+      $headers[$headerName] = $headerValue
+      if ($headerName -eq "content-length") {
+        [int]::TryParse($headerValue, [ref]$contentLength) | Out-Null
+      }
     }
   }
   $bodyBytes = @()
@@ -116,6 +122,7 @@ function Read-HttpRequest {
     Method = $parts[0]
     Path = [System.Uri]::UnescapeDataString($path)
     Query = $query
+    Headers = $headers
     Body = if ($bodyBytes.Count -gt 0) { [System.Text.Encoding]::UTF8.GetString($bodyBytes) } else { "" }
   }
 }
@@ -126,6 +133,41 @@ function Get-SourceByCode {
     if ($source.code -eq $Code) { return $source }
   }
   return $null
+}
+
+function Get-MapValue {
+  param($Map, [string]$Name)
+  if ($null -eq $Map -or [string]::IsNullOrWhiteSpace($Name)) { return $null }
+  if ($Map -is [System.Collections.IDictionary]) {
+    if ($Map.ContainsKey($Name)) { return $Map[$Name] }
+    return $null
+  }
+  $property = $Map.PSObject.Properties[$Name]
+  if ($property) { return $property.Value }
+  return $null
+}
+
+function Set-MapValue {
+  param($Map, [string]$Name, $Value)
+  if ($null -eq $Map -or [string]::IsNullOrWhiteSpace($Name)) { return }
+  if ($Map -is [System.Collections.IDictionary]) {
+    $Map[$Name] = $Value
+    return
+  }
+  $property = $Map.PSObject.Properties[$Name]
+  if ($property) {
+    $property.Value = $Value
+  }
+  else {
+    $Map | Add-Member -NotePropertyName $Name -NotePropertyValue $Value
+  }
+}
+
+function Test-BlankValue {
+  param($Value)
+  if ($null -eq $Value) { return $true }
+  if ($Value -is [string]) { return [string]::IsNullOrWhiteSpace($Value) }
+  return $false
 }
 
 function ConvertTo-PlainHashtable {
@@ -181,6 +223,297 @@ function Write-JsonFileWithRetry {
   throw $lastError
 }
 
+function Get-StableHash {
+  param([string]$Value)
+  if ([string]::IsNullOrWhiteSpace($Value)) { return "" }
+  $sha = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($Value)
+    return (($sha.ComputeHash($bytes) | ForEach-Object { $_.ToString("x2") }) -join "")
+  }
+  finally {
+    $sha.Dispose()
+  }
+}
+
+function Read-CompanyRegistry {
+  if (Test-Path $CompanyRegistryPath -PathType Leaf) {
+    try {
+      return ConvertTo-PlainHashtable (Get-Content $CompanyRegistryPath -Raw -Encoding UTF8 | ConvertFrom-Json)
+    }
+    catch {
+      return @{ companies = @{} }
+    }
+  }
+  return @{ companies = @{} }
+}
+
+function Ensure-CompanyRegistry {
+  param($Registry)
+  if ($null -eq $Registry) { $Registry = @{ companies = @{} } }
+  if (-not $Registry.ContainsKey("companies") -or $null -eq $Registry.companies) {
+    $Registry.companies = @{}
+  }
+  return $Registry
+}
+
+function Save-CompanyRegistry {
+  param($Registry)
+  $Registry.updated_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+  Write-JsonFileWithRetry $CompanyRegistryPath ($Registry | ConvertTo-Json -Depth 70)
+}
+
+function Ensure-CompanyProfile {
+  param($Registry, [string]$Inn, [string]$CompanyName = "")
+  $company = $Registry.companies[$Inn]
+  if ($null -eq $company) {
+    $company = [ordered]@{
+      inn = $Inn
+      name = $CompanyName
+      created_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+      reports = @()
+    }
+  }
+  elseif ($CompanyName -and -not $company.name) {
+    $company.name = $CompanyName
+  }
+  $company.updated_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+  $Registry.companies[$Inn] = $company
+  return $company
+}
+
+function Get-MessengerCampaignPrompt {
+  param([string]$CompanyName, [string]$Inn, [string]$CampaignId)
+  $subject = if ($CompanyName) { $CompanyName } else { "компании с ИНН $Inn" }
+  return "ПлюсЗвено проверяет сведения о $subject. Если вы работали с этой компанией, были сотрудником, подрядчиком, заказчиком или клиентом, напишите боту в личные сообщения код $CampaignId и расскажите только факты: роль, период, объект/город, что обещали и что было на деле. Не публикуйте персональные данные других людей в чат."
+}
+
+function Update-MessengerReviewsSource {
+  param($Company)
+  $responses = @($Company.messenger_review_responses)
+  if (-not $Company.latest_report) { return }
+  $reviews = @($responses | Select-Object -Last 50 | ForEach-Object {
+    [ordered]@{
+      text = $_.text
+      author = $_.role
+      date = $_.received_at
+      rating = ""
+      verification_status = $_.verification_status
+      url = $_.source_url
+      platform = $_.platform
+      campaign_id = $_.campaign_id
+      respondent_hash = $_.respondent_hash
+    }
+  })
+  $source = [ordered]@{
+    code = "messenger_reviews"
+    title = "Опросы в мессенджерах"
+    status = $(if ($responses.Count -gt 0) { "candidate_review" } else { "configured" })
+    url = ""
+    collected = [ordered]@{
+      campaign_count = @($Company.messenger_review_campaigns).Count
+      review_count = $responses.Count
+      review_count_text = "$($responses.Count) ответов"
+      sample_reviews = $reviews
+      collection_mode = "messenger_bot_inbox"
+      privacy_note = "Ответы получены из личных сообщений боту и требуют модерации перед публикацией."
+    }
+    signals = @()
+    errors = @()
+    next_actions = @(
+      "Проверить дубли, роль автора, период работы, объект/город и наличие подтверждающих деталей.",
+      "Не публиковать персональные данные и неподтвержденные обвинения без модерации."
+    )
+  }
+  $Company.latest_report.sources = @($Company.latest_report.sources | Where-Object { $_.code -ne "messenger_reviews" })
+  $Company.latest_report.sources += $source
+}
+
+function Add-MessengerCampaign {
+  param($Body)
+  $inn = ([string]$Body.inn -replace "\D+", "")
+  if ($inn.Length -notin @(10, 12, 13, 15)) {
+    throw "Identifier must contain 10/12/13/15 digits."
+  }
+  $registry = Ensure-CompanyRegistry (Read-CompanyRegistry)
+  $companyName = [string]$Body.company_name
+  $company = Ensure-CompanyProfile $registry $inn $companyName
+  $platforms = @($Body.platforms | Where-Object { $_ } | ForEach-Object { "$_".ToLowerInvariant() })
+  if ($platforms.Count -eq 0) { $platforms = @("telegram", "max", "vk") }
+  $chatIds = @($Body.chat_ids | Where-Object { $_ } | ForEach-Object { "$_" })
+  $campaignId = if ($Body.campaign_id) { [string]$Body.campaign_id } else { "pz-$inn-$((Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss"))" }
+  $prompt = if ($Body.prompt) { [string]$Body.prompt } else { Get-MessengerCampaignPrompt $company.name $inn $campaignId }
+  $campaign = [ordered]@{
+    campaign_id = $campaignId
+    inn = $inn
+    company_name = $company.name
+    platforms = $platforms
+    chat_ids = $chatIds
+    prompt = $prompt
+    status = "draft"
+    created_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    moderation_status = "responses_require_review"
+  }
+  if ($null -eq $company.messenger_review_campaigns) { $company.messenger_review_campaigns = @() }
+  $company.messenger_review_campaigns = @($company.messenger_review_campaigns) + (, $campaign)
+  Update-MessengerReviewsSource $company
+  $registry.companies[$inn] = $company
+  Save-CompanyRegistry $registry
+  return [ordered]@{ saved = $true; campaign = $campaign; company_profile = $company }
+}
+
+function Add-MessengerReviewResponse {
+  param($Body)
+  $inn = ([string]$Body.inn -replace "\D+", "")
+  if ($inn.Length -notin @(10, 12, 13, 15)) {
+    throw "Identifier must contain 10/12/13/15 digits."
+  }
+  $text = ([string]$Body.text).Trim()
+  if ($text.Length -lt 10) { throw "Ответ слишком короткий для сохранения." }
+  $platform = if ($Body.platform) { ([string]$Body.platform).ToLowerInvariant() } else { "unknown" }
+  if ($platform -notin @("telegram", "max", "vk", "manual")) { throw "Unknown messenger platform." }
+  $private = $true
+  if ($null -ne $Body.private_message) { $private = [bool]$Body.private_message }
+  if (-not $private) { throw "Сохраняются только добровольные личные сообщения боту." }
+  $rawAuthorId = [string]$Body.author_id
+  $respondentHash = Get-StableHash "$platform`:$rawAuthorId"
+  $registry = Ensure-CompanyRegistry (Read-CompanyRegistry)
+  $company = Ensure-CompanyProfile $registry $inn ([string]$Body.company_name)
+  if ($null -eq $company.messenger_review_responses) { $company.messenger_review_responses = @() }
+  $duplicate = $false
+  foreach ($item in @($company.messenger_review_responses)) {
+    if ($respondentHash -and $item.respondent_hash -eq $respondentHash -and $item.text -eq $text) {
+      $duplicate = $true
+      break
+    }
+  }
+  $response = [ordered]@{
+    response_id = "mr-$((Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmssfff"))"
+    campaign_id = [string]$Body.campaign_id
+    inn = $inn
+    company_name = $company.name
+    platform = $platform
+    chat_id_hash = Get-StableHash "$platform`:$($Body.chat_id)"
+    respondent_hash = $respondentHash
+    role = if ($Body.role) { [string]$Body.role } else { "роль не указана" }
+    period = [string]$Body.period
+    object_or_city = [string]$Body.object_or_city
+    text = $text
+    source_url = [string]$Body.source_url
+    private_message = $true
+    consent = if ($null -ne $Body.consent) { [bool]$Body.consent } else { $true }
+    verification_status = $(if ($duplicate) { "duplicate_candidate" } else { "needs_moderation" })
+    received_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+  }
+  if (-not $duplicate) {
+    $company.messenger_review_responses = @($company.messenger_review_responses) + (, $response)
+  }
+  Update-MessengerReviewsSource $company
+  $registry.companies[$inn] = $company
+  Save-CompanyRegistry $registry
+  return [ordered]@{ saved = (-not $duplicate); duplicate = $duplicate; response = $response; company_profile = $company }
+}
+
+function Test-MessengerInboxSecret {
+  param($Request)
+  $secret = $env:MESSENGER_INBOX_SECRET
+  if ([string]::IsNullOrWhiteSpace($secret)) { return $true }
+  $provided = ""
+  if ($Request.Headers -and $Request.Headers.ContainsKey("x-pluszveno-secret")) {
+    $provided = [string]$Request.Headers["x-pluszveno-secret"]
+  }
+  if (-not $provided) {
+    $provided = [string](Get-QueryParam $Request.Query "secret")
+  }
+  return [System.String]::Equals($provided, $secret, [System.StringComparison]::Ordinal)
+}
+
+function Merge-CompanyReportFallback {
+  param($Report)
+  if ($null -eq $Report) { return $Report }
+  $reportMap = ConvertTo-PlainHashtable $Report
+  $inn = [string](Get-MapValue $reportMap "inn")
+  if ([string]::IsNullOrWhiteSpace($inn)) { return $reportMap }
+
+  $registry = Ensure-CompanyRegistry (Read-CompanyRegistry)
+  $company = Get-MapValue (Get-MapValue $registry "companies") $inn
+  if ($null -eq $company) { return $reportMap }
+
+  $latest = Get-MapValue $company "latest_report"
+  $latestLegal = Get-MapValue $latest "legal_card"
+  $latestChecko = Get-SourceByCode $latest "checko_company_card"
+  $latestCheckoCollected = Get-MapValue $latestChecko "collected"
+
+  $legal = Get-MapValue $reportMap "legal_card"
+  if ($null -eq $legal) {
+    $legal = [ordered]@{}
+    Set-MapValue $reportMap "legal_card" $legal
+  }
+
+  $fallbackFields = @()
+  $legalMappings = @(
+    @{ target = "name"; values = @((Get-MapValue $latestLegal "name"), (Get-MapValue $latestCheckoCollected "name"), (Get-MapValue $company "name")) },
+    @{ target = "address"; values = @((Get-MapValue $latestLegal "address"), (Get-MapValue $latestCheckoCollected "address")) },
+    @{ target = "director"; values = @((Get-MapValue $latestLegal "director"), (Get-MapValue $latestCheckoCollected "director"), (Get-MapValue $company "director")) },
+    @{ target = "ogrn"; values = @((Get-MapValue $latestLegal "ogrn"), (Get-MapValue $latestCheckoCollected "ogrn"), (Get-MapValue $company "ogrn")) },
+    @{ target = "kpp"; values = @((Get-MapValue $latestLegal "kpp"), (Get-MapValue $latestCheckoCollected "kpp")) },
+    @{ target = "status"; values = @((Get-MapValue $latestLegal "status"), (Get-MapValue $latestCheckoCollected "status")) }
+  )
+  foreach ($mapping in $legalMappings) {
+    $target = [string]$mapping.target
+    if (-not (Test-BlankValue (Get-MapValue $legal $target))) { continue }
+    foreach ($candidate in @($mapping.values)) {
+      if (Test-BlankValue $candidate) { continue }
+      Set-MapValue $legal $target $candidate
+      $fallbackFields += "legal_card.$target"
+      break
+    }
+  }
+
+  $checko = Get-SourceByCode $reportMap "checko_company_card"
+  if ($null -ne $checko -and $null -ne $latestCheckoCollected) {
+    $collected = Get-MapValue $checko "collected"
+    if ($null -eq $collected) {
+      $collected = [ordered]@{}
+      Set-MapValue $checko "collected" $collected
+    }
+    $checkoFields = @(
+      "name", "title", "inn", "ogrn", "kpp", "address", "director", "status",
+      "revenue", "net_profit", "staff_count", "average_monthly_salary",
+      "finance_year", "charter_capital", "capital", "liquidation_date_text", "liquidation_reason",
+      "arbitration_defendant_summary", "arbitration_plaintiff_summary",
+      "enforcement_proceedings_summary", "bank_accounts_blocking",
+      "company_url", "normalized_search_name"
+    )
+    foreach ($field in $checkoFields) {
+      if (-not (Test-BlankValue (Get-MapValue $collected $field))) { continue }
+      $candidate = Get-MapValue $latestCheckoCollected $field
+      if (Test-BlankValue $candidate) { continue }
+      Set-MapValue $collected $field $candidate
+      $fallbackFields += "checko_company_card.$field"
+    }
+    $latestUrl = Get-MapValue $latestChecko "url"
+    if ((Test-BlankValue (Get-MapValue $checko "url")) -and -not (Test-BlankValue $latestUrl)) {
+      Set-MapValue $checko "url" $latestUrl
+      $fallbackFields += "checko_company_card.url"
+    }
+    Set-MapValue $collected "fallback_source" "local_registry"
+  }
+
+  if ($fallbackFields.Count -gt 0) {
+    $diagnostics = Get-MapValue $reportMap "diagnostics"
+    if ($null -eq $diagnostics) {
+      $diagnostics = [ordered]@{}
+      Set-MapValue $reportMap "diagnostics" $diagnostics
+    }
+    Set-MapValue $diagnostics "fallback_used" "local_registry"
+    Set-MapValue $diagnostics "fallback_note" "Legal data was reused from the local registry because external lookup did not return enough fields."
+    Set-MapValue $diagnostics "fallback_fields" @($fallbackFields | Select-Object -Unique)
+  }
+
+  return $reportMap
+}
+
 function Save-CompanyReport {
   param($Report)
   New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
@@ -218,7 +551,19 @@ function Save-CompanyReport {
   $company.revenue = if ($checko -and $checko.collected.revenue) { $checko.collected.revenue } else { $company.revenue }
   $company.net_profit = if ($checko -and $checko.collected.net_profit) { $checko.collected.net_profit } else { $company.net_profit }
   $company.dreamjob_reviews = if ($dreamjob -and $dreamjob.collected.review_count) { $dreamjob.collected.review_count } else { $company.dreamjob_reviews }
-  $company.latest_report = $Report
+  $isQuickReport = $false
+  if ($Report.diagnostics -and $null -ne $Report.diagnostics.quick_only) {
+    $isQuickReport = [bool]$Report.diagnostics.quick_only
+  }
+  if ($isQuickReport) {
+    $company.quick_report = $Report
+    if (-not $company.latest_report) {
+      $company.latest_report = $Report
+    }
+  }
+  else {
+    $company.latest_report = $Report
+  }
   $company.reports = @($company.reports | Select-Object -Last 9)
   $company.reports += [ordered]@{
     generated_at = $Report.generated_at
@@ -413,12 +758,12 @@ function Collect-AntijobReviewsFromHtml {
     $date = Clean-ReviewServiceText $match.Groups["date"].Value
     $text = Clean-ReviewServiceText $match.Groups["text"].Value
     $text = $text -replace '\s*Пр\.\.\.\s*$', ''
-    $text = "$text [фрагмент со страницы списка Antijob]"
     Add-ReviewItem $Items $text "$author, $company, $city" $date "" $Url ""
   }
   return [ordered]@{
     review_count = $(if ($reviewCount) { [int]$reviewCount } else { $Items.Count })
     review_count_text = $(if ($reviewCount) { "$reviewCount отзывов" } elseif ($Items.Count -gt 0) { "$($Items.Count) отзывов" } else { "" })
+    source_note = $(if ($Items.Count -gt 0) { "Отзывы собраны из HTML Antijob; если страница списка отдала короткий фрагмент, нужна прямая страница отзыва." } else { "" })
   }
 }
 
@@ -480,8 +825,11 @@ function ConvertTo-ReviewCandidates {
 }
 
 function Collect-ReviewsFromUrl {
-  param([string]$Source, [string]$Url)
+  param([string]$Source, [string]$Url, [string]$ExpectedName = "", [string]$ExpectedAddress = "")
   if (-not $Url -or $Url -notmatch '^https?://') { throw "Укажите корректную ссылку http/https." }
+  if ($Source -eq "2gis" -or $Source -eq "yandex" -or $Url -match "2gis\.ru|go\.2gis\.com|yandex\.ru/(maps|profile|org)") {
+    return Collect-ReviewsFromBrowser $Source $Url $ExpectedName $ExpectedAddress
+  }
   $headers = @{
     "User-Agent" = "Mozilla/5.0 PlusZvenoReviewCollector/0.1"
     "Accept" = "text/html,application/xhtml+xml,application/json,text/plain,*/*"
@@ -502,7 +850,7 @@ function Collect-ReviewsFromUrl {
     $meta = Collect-AntijobReviewsFromHtml $html $items $finalUrl
   }
   elseif ($Source -eq "yandex" -or $finalUrl -match "yandex\.ru/(maps|profile|org)") {
-    throw "Яндекс.Карты не отдали отзывы в статическом HTML. Нужен отдельный адаптер Яндекс.Карт: сейчас сохраните корректную ссылку, сбор текстов подключим следующим шагом."
+    $meta.source_note = "Яндекс.Карты не отдали отзывы в статическом HTML. Нужен отдельный браузерный/API-адаптер Яндекс.Карт."
   }
 
   if ($items.Count -eq 0) {
@@ -534,11 +882,70 @@ function Collect-ReviewsFromUrl {
     }
   }
 
-  if ($items.Count -eq 0) {
+  if ($items.Count -eq 0 -and ($Source -eq "2gis" -or $Source -eq "yandex" -or $finalUrl -match "2gis\.ru|go\.2gis\.com|yandex\.ru/(maps|profile|org)")) {
+    $meta.review_count = 0
+    $meta.review_count_text = "0 отзывов"
+    $meta.source_note = "Источник найден, но тексты отзывов не отданы в статическом HTML. Нужен браузерный/API-адаптер для полного сбора."
+  }
+  elseif ($items.Count -eq 0) {
     throw "Страница не отдала тексты отзывов в HTML/JSON. Проверьте, что ссылка ведет на страницу отзывов, а не на динамическую карточку без серверной разметки."
   }
   if (-not $meta.review_count) { $meta.review_count = $items.Count }
   if (-not $meta.review_count_text) { $meta.review_count_text = "$($items.Count) отзывов" }
+  return [ordered]@{
+    reviews = @($items | Select-Object -First 50)
+    meta = $meta
+    final_url = $finalUrl
+  }
+}
+
+function Collect-ReviewsFromBrowser {
+  param([string]$Source, [string]$Url, [string]$ExpectedName = "", [string]$ExpectedAddress = "")
+  $collector = Join-Path $Root "browser_review_collector.js"
+  if (-not (Test-Path $collector -PathType Leaf)) {
+    throw "Браузерный сборщик не найден: $collector"
+  }
+  $profileRoot = Join-Path $DataDir "browser_profiles"
+  New-Item -ItemType Directory -Force -Path $profileRoot | Out-Null
+  $safeSource = if ($Source) { ($Source -replace "[^a-zA-Z0-9_-]", "_") } else { "reviews" }
+  $profileDir = Join-Path $profileRoot $safeSource
+  $startedAt = Get-Date
+  $outPath = Join-Path ([System.IO.Path]::GetTempPath()) "pz_browser_reviews_$([System.Guid]::NewGuid().ToString('N')).json"
+  Write-Host "Browser review collection started: source $Source, url $Url"
+  $output = & node $collector --source $Source --url $Url --limit 50 --profile $profileDir --company $ExpectedName --address $ExpectedAddress --out $outPath 2>&1
+  $elapsed = [int]((Get-Date) - $startedAt).TotalSeconds
+  Write-Host "Browser review collection finished: source $Source, elapsed ${elapsed}s"
+  $text = ""
+  if (Test-Path $outPath -PathType Leaf) {
+    $text = Get-Content $outPath -Raw -Encoding UTF8
+    Remove-Item -LiteralPath $outPath -Force -ErrorAction SilentlyContinue
+  }
+  else {
+    $text = ($output | Out-String).Trim()
+  }
+  try {
+    $payload = $text | ConvertFrom-Json
+  }
+  catch {
+    throw "Браузерный сборщик вернул не JSON: $text"
+  }
+  if ($LASTEXITCODE -ne 0 -or -not $payload.ok) {
+    $message = if ($payload.error) { [string]$payload.error } else { $text }
+    throw $message
+  }
+  $items = [System.Collections.ArrayList]::new()
+  foreach ($review in @($payload.reviews)) {
+    Add-ReviewItem $items "$($review.text)" "$($review.author)" "$($review.date)" "$($review.rating)" "$($review.url)" "$($review.verification_status)"
+  }
+  $meta = [ordered]@{}
+  if ($payload.meta) {
+    foreach ($property in $payload.meta.PSObject.Properties) {
+      $meta[$property.Name] = $property.Value
+    }
+  }
+  if (-not $meta.review_count) { $meta.review_count = $items.Count }
+  if (-not $meta.review_count_text) { $meta.review_count_text = "$($items.Count) отзывов" }
+  $finalUrl = if ($payload.final_url) { [string]$payload.final_url } else { $Url }
   return [ordered]@{
     reviews = @($items | Select-Object -First 50)
     meta = $meta
@@ -608,7 +1015,13 @@ function Add-ManualReviewsToCompany {
     throw "Компания не найдена в локальном справочнике. Сначала соберите первичный отчет."
   }
   $company = $registry.companies[$Inn]
-  $collection = Collect-ReviewsFromUrl $Source $Url
+  $expectedName = ""
+  $expectedAddress = ""
+  if ($company.latest_report -and $company.latest_report.legal_card) {
+    $expectedName = [string]$company.latest_report.legal_card.name
+    $expectedAddress = [string]$company.latest_report.legal_card.address
+  }
+  $collection = Collect-ReviewsFromUrl $Source $Url $expectedName $expectedAddress
   $reviews = @($collection.reviews)
   $meta = $collection.meta
   $entry = [ordered]@{
@@ -621,6 +1034,7 @@ function Add-ManualReviewsToCompany {
     rating_count_text = $meta.rating_count_text
     review_count = $(if ($meta.review_count) { $meta.review_count } else { $reviews.Count })
     review_count_text = $(if ($meta.review_count_text) { $meta.review_count_text } else { "$($reviews.Count) отзывов" })
+    source_note = $meta.source_note
     reviews = $reviews
     added_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
   }
@@ -641,8 +1055,21 @@ function Add-ManualReviewsToCompany {
         rating_count_text = $entry.rating_count_text
         review_count = $entry.review_count
         review_count_text = $entry.review_count_text
+        source_note = $entry.source_note
+        name_match = $meta.name_match
+        address_match = $meta.address_match
+        expected_name = $meta.expected_name
+        expected_address = $meta.expected_address
+        expected_city = $meta.expected_city
+        expected_street = $meta.expected_street
+        expected_house = $meta.expected_house
+        city_match = $meta.city_match
+        street_match = $meta.street_match
+        house_match = $meta.house_match
+        matched_name_tokens = $meta.matched_name_tokens
+        matched_address_tokens = $meta.matched_address_tokens
         sample_reviews = $reviews
-        collection_mode = "url_review_collector"
+        collection_mode = $(if ($meta.collection_mode) { $meta.collection_mode } else { "url_review_collector" })
       }
       signals = @()
       errors = @()
@@ -682,13 +1109,62 @@ while ($true) {
         continue
       }
       $script = Join-Path $Root "company_check\company_check.ps1"
-      $json = & powershell -NoProfile -ExecutionPolicy Bypass -File $script -Inn $inn -JsonOnly -NoSave 2>&1
+      $checkStartedAt = Get-Date
+      Write-Host "Company quick check started: INN $inn, script $script"
+      $json = & powershell -NoProfile -ExecutionPolicy Bypass -File $script -Inn $inn -JsonOnly -NoSave -QuickOnly 2>&1
+      $checkElapsed = [int]((Get-Date) - $checkStartedAt).TotalSeconds
+      Write-Host "Company quick check finished: INN $inn, elapsed ${checkElapsed}s"
       if ($LASTEXITCODE -ne 0) {
         $escaped = (($json | Out-String) -replace "\\", "\\") -replace '"', '\"'
         Send-Text $stream "{`"error`":`"$escaped`"}" "application/json; charset=utf-8" 500
         continue
       }
-      $report = ($json | Out-String) | ConvertFrom-Json
+      $report = Merge-CompanyReportFallback (($json | Out-String) | ConvertFrom-Json)
+      $saved = $true
+      $saveError = ""
+      $company = $null
+      try {
+        $company = Save-CompanyReport $report
+      }
+      catch {
+        $saved = $false
+        $saveError = $_.Exception.Message
+      }
+      $payload = [ordered]@{
+        report = $report
+        company_profile = $company
+        saved = $saved
+        save_error = $saveError
+        registry_path = $CompanyRegistryPath
+      } | ConvertTo-Json -Depth 50
+      Send-Text $stream $payload "application/json; charset=utf-8"
+      continue
+    }
+
+    if ($request.Path -eq "/api/company-check-sources") {
+      $inn = ((Get-QueryParam $request.Query "inn") -replace "\D+", "")
+      if ($inn.Length -notin @(10, 12, 13, 15)) {
+        Send-Text $stream '{"error":"Identifier must contain 10/12/13/15 digits"}' "application/json; charset=utf-8" 400
+        continue
+      }
+      $script = Join-Path $Root "company_check\company_check.ps1"
+      $searchQuery = [System.Uri]::UnescapeDataString([string](Get-QueryParam $request.Query "q"))
+      $checkStartedAt = Get-Date
+      Write-Host "Company source search started: INN $inn, script $script"
+      if ([string]::IsNullOrWhiteSpace($searchQuery)) {
+        $json = & powershell -NoProfile -ExecutionPolicy Bypass -File $script -Inn $inn -JsonOnly -NoSave 2>&1
+      }
+      else {
+        $json = & powershell -NoProfile -ExecutionPolicy Bypass -File $script -Inn $inn -SearchQuery $searchQuery -JsonOnly -NoSave 2>&1
+      }
+      $checkElapsed = [int]((Get-Date) - $checkStartedAt).TotalSeconds
+      Write-Host "Company source search finished: INN $inn, elapsed ${checkElapsed}s"
+      if ($LASTEXITCODE -ne 0) {
+        $escaped = (($json | Out-String) -replace "\\", "\\") -replace '"', '\"'
+        Send-Text $stream "{`"error`":`"$escaped`"}" "application/json; charset=utf-8" 500
+        continue
+      }
+      $report = Merge-CompanyReportFallback (($json | Out-String) | ConvertFrom-Json)
       $saved = $true
       $saveError = ""
       $company = $null
@@ -724,6 +1200,36 @@ while ($true) {
           company_profile = $company
           report = $company.latest_report
         } | ConvertTo-Json -Depth 60
+        Send-Text $stream $payload "application/json; charset=utf-8"
+      }
+      catch {
+        $escaped = ($_.Exception.Message -replace "\\", "\\") -replace '"', '\"'
+        Send-Text $stream "{`"error`":`"$escaped`"}" "application/json; charset=utf-8" 400
+      }
+      continue
+    }
+
+    if ($request.Path -eq "/api/messenger-campaigns" -and $request.Method.Equals("POST", [System.StringComparison]::OrdinalIgnoreCase)) {
+      try {
+        $body = $request.Body | ConvertFrom-Json
+        $payload = Add-MessengerCampaign $body | ConvertTo-Json -Depth 70
+        Send-Text $stream $payload "application/json; charset=utf-8"
+      }
+      catch {
+        $escaped = ($_.Exception.Message -replace "\\", "\\") -replace '"', '\"'
+        Send-Text $stream "{`"error`":`"$escaped`"}" "application/json; charset=utf-8" 400
+      }
+      continue
+    }
+
+    if ($request.Path -eq "/api/messenger-inbox" -and $request.Method.Equals("POST", [System.StringComparison]::OrdinalIgnoreCase)) {
+      try {
+        if (-not (Test-MessengerInboxSecret $request)) {
+          Send-Text $stream '{"error":"Forbidden"}' "application/json; charset=utf-8" 403
+          continue
+        }
+        $body = $request.Body | ConvertFrom-Json
+        $payload = Add-MessengerReviewResponse $body | ConvertTo-Json -Depth 70
         Send-Text $stream $payload "application/json; charset=utf-8"
       }
       catch {
